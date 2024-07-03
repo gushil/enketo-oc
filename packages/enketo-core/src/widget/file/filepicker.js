@@ -172,24 +172,6 @@ class Filepicker extends Widget {
                 let file;
                 let fileName;
                 let postfix;
-
-                // Get the file
-                file = event.target.files[0];
-
-                // Fixed filename with # char
-                let fixedFileName = '';
-                if (typeof file === 'object' && file !== null && file.name) {
-                    if (file.name.includes('#')) {
-                        fixedFileName = file.name.replaceAll('#', '_');
-                        const fixedNameFile = new File([file], fixedFileName);
-                        file = fixedNameFile;
-                        this.element.setAttribute(
-                            'data-loaded-file-name',
-                            fixedFileName
-                        );
-                    }
-                }
-
                 const loadedFileName = this.element.getAttribute(
                     'data-loaded-file-name'
                 );
@@ -203,6 +185,8 @@ class Filepicker extends Widget {
                 }
                 event.stopImmediatePropagation();
 
+                // Get the file
+                file = event.target.files[0];
                 postfix = `-${now.getHours()}_${now.getMinutes()}_${now.getSeconds()}`;
                 event.target.dataset.filenamePostfix = postfix;
                 fileName = getFilename(file, postfix);

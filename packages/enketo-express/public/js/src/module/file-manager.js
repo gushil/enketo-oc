@@ -171,13 +171,10 @@ function getCurrentFiles() {
             // First create a clone, because the name property is immutable
             // TODO: in the future, when browser support increase we can invoke
             // the File constructor to do this.
-            let newFilename = getFilename(file, input.dataset.filenamePostfix);
-
-            // Fixed filename with # char
-            if (newFilename.includes('#')) {
-                newFilename = newFilename.replaceAll('#', '_');
-            }
-
+            const newFilename = getFilename(
+                file,
+                input.dataset.filenamePostfix
+            );
             // If file is resized, get Blob representation of data URI
             if (input.dataset.resized && input.dataset.resizedDataURI) {
                 file = utils.dataUriToBlobSync(input.dataset.resizedDataURI);

@@ -1093,11 +1093,6 @@ Form.prototype.setEventHandlers = function () {
                 );
             }
 
-            // Fixed filename with # char
-            if (n.val.includes('#')) {
-                n.val = n.val.replaceAll('#', '_');
-            }
-
             const updated = that.model
                 .node(n.path, n.index)
                 .setVal(n.val, n.xmlType);
