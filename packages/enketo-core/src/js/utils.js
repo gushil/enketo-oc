@@ -77,11 +77,6 @@ function stripQuotes(str) {
  */
 function getFilename(file, postfix) {
     if (typeof file === 'object' && file !== null && file.name) {
-        // Characters that allowed to be in URL
-        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI#description
-        // https://datatracker.ietf.org/doc/html/rfc2396
-        const safeForURLfileName = new RegExp(`^([A-z0-9-_.!~\*'\(\)])+$`);
-
         postfix = postfix || '';
         const filenameParts = file.name.split('.');
         if (filenameParts.length > 1) {
@@ -92,7 +87,10 @@ function getFilename(file, postfix) {
 
         let fileName = filenameParts.join('.');
 
-        if (!safeForURLfileName.test(fileName)) {
+        // If fileName includes characters that not allowed to be in URL, encode it
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI#description
+        // https://datatracker.ietf.org/doc/html/rfc2396
+        if (!/^([A-z0-9-_.!~*'()])+$/.test(fileName)) {
             fileName = encodeURIComponent(fileName);
         }
 
