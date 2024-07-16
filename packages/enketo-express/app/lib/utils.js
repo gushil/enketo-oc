@@ -224,11 +224,6 @@ function areOwnPropertiesEqual(a, b) {
     return true;
 }
 
-function getUrlFilename(url) {
-    const filename = url.split('/').pop();
-    return filename || '';
-}
-
 module.exports = {
     getOpenRosaKey,
     getXformsManifestHash,
@@ -240,5 +235,4 @@ module.exports = {
     areOwnPropertiesEqual,
     insecureAes192Decrypt,
     insecureAes192Encrypt,
-    getUrlFilename,
 };
