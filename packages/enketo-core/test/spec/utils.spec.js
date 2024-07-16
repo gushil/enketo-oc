@@ -81,6 +81,7 @@ describe('return postfixed filenames', () => {
         ['myname', undefined, 'myname'],
         ['myname', null, 'myname'],
         ['myname', false, 'myname'],
+        ['myname#1.dot.jpg', '-mypostfix', 'myname%231.dot-mypostfix.jpg'],
     ].forEach(([name, postfix, expected]) => {
         it(`returns the filename ${expected} from ${name} and ${postfix}`, () => {
             const file = new Blob(['a'], {
