@@ -191,6 +191,16 @@ class Filepicker extends Widget {
                 event.target.dataset.filenamePostfix = postfix;
                 fileName = getFilename(file, postfix);
 
+                // If fileName is changed/encoded, rename the file.name too
+                if (
+                    typeof file === 'object' &&
+                    file !== null &&
+                    file.name &&
+                    !fileName.includes(file.name)
+                ) {
+                    file = new File([file], fileName);
+                }
+
                 // Process the file
                 // Resize the file. Currently will resize an image.
                 this._resizeFile(file, that.props.mediaType)
