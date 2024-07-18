@@ -89,32 +89,39 @@ const localize = (container, lng) => {
             list.forEach((el) => {
                 const key = el.dataset.i18n;
                 if (key) {
-                    if (!cache[key]) {
-                        let options = {};
-                        // quick hack for __icon__ replacement
-                        if (el.dataset.i18nIcon) {
-                            options = {
-                                icon: `<span class="icon ${el.dataset.i18nIcon}"> </span>`,
-                                interpolation: { escapeValue: false },
-                            };
-                        }
-                        if (el.dataset.i18nNumber) {
-                            options = {
-                                number: el.dataset.i18nNumber,
-                            };
-                        }
-                        cache[key] = t(key, options);
+                    let options = {};
+                    // quick hack for __icon__ replacement
+                    if (el.dataset.i18nIcon) {
+                        options = {
+                            icon: `<span class="icon ${el.dataset.i18nIcon}"> </span>`,
+                            interpolation: { escapeValue: false },
+                        };
                     }
+                    if (el.dataset.i18nNumber) {
+                        options = {
+                            number: el.dataset.i18nNumber,
+                        };
+                    }
+
+                    // Update cache only if the translation is new or has changed
+                    const translationText = t(key, options);
+                    if (!cache[key] || translationText !== cache[key]) {
+                        cache[key] = translationText;
+                    }
+
                     // This assumes that if the element has a placeholder, that's the thing that
                     // needs to be localized, since placeholders are only used on form controls,
                     // and the textContent of a form control is never translatable.
+                    const translationCache = cache[key];
                     if (el.placeholder) {
-                        el.placeholder = cache[key];
+                        el.placeholder = translationCache;
                     } else if (el.dataset.i18nIcon) {
                         el.textContent = '';
-                        el.append(range.createContextualFragment(cache[key]));
+                        el.append(
+                            range.createContextualFragment(translationCache)
+                        );
                     } else {
-                        el.textContent = cache[key];
+                        el.textContent = translationCache;
                     }
                 }
             });
