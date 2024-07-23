@@ -241,6 +241,25 @@ function cacheInstance(req, res, next) {
         instanceAttachments: req.body.instance_attachments,
     };
 
+    // Encode attachment url filename
+    if (
+        'instanceAttachments' in survey &&
+        survey.instanceAttachments !== undefined
+    ) {
+        if (Object.keys(survey.instanceAttachments).length > 0) {
+            Object.keys(survey.instanceAttachments).forEach((key) => {
+                let attachmentUrl = survey.instanceAttachments[key];
+                const attachmentUrlFilename =
+                    utils.getUrlFilename(attachmentUrl);
+                attachmentUrl = attachmentUrl.replace(
+                    attachmentUrlFilename,
+                    encodeURIComponent(attachmentUrlFilename)
+                );
+                survey.instanceAttachments[key] = attachmentUrl;
+            });
+        }
+    }
+
     return surveyModel
         .getId(survey)
         .then((id) => {
