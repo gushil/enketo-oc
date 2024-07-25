@@ -5,6 +5,7 @@
  */
 
 let cookies;
+const SAFE_FILE_IN_URL_RE = /^([A-z0-9-_.!~*'()])+$/;
 
 /**
  * Parses an Expression to extract all function calls and their argument arrays.
@@ -87,10 +88,10 @@ function getFilename(file, postfix) {
 
         let fileName = filenameParts.join('.');
 
-        // If fileName includes characters that not allowed to be in URL, encode it
+        // If the fileName contains characters that are not allowed in a URL, encode it.
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI#description
         // https://datatracker.ietf.org/doc/html/rfc2396
-        if (!/^([A-z0-9-_.!~*'()])+$/.test(fileName)) {
+        if (!SAFE_FILE_IN_URL_RE.test(fileName)) {
             fileName = encodeURIComponent(fileName);
         }
 
