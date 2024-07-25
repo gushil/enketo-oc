@@ -268,10 +268,10 @@ function cacheInstance(req, res, next) {
                         attachmentUrlFilename,
                         encodeURIComponent(attachmentUrlFilename)
                     );
+                    survey.instanceAttachments[encodeURIComponent(key)] =
+                        attachmentUrl;
+                    delete survey.instanceAttachments[key];
                 }
-                survey.instanceAttachments[encodeURIComponent(key)] =
-                    attachmentUrl;
-                delete survey.instanceAttachments[key];
             });
         }
     }
