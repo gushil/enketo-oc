@@ -13,6 +13,9 @@ const router = express.Router();
 const quotaErrorMessage = 'Forbidden. No quota left';
 // const debug = require( 'debug' )( 'oc-api-controller-v1' );
 
+// This is the same regular expression as in enketo-core's utils module.
+const SAFE_FILE_IN_URL_RE = /^([A-z0-9-_.!~*'()])+$/;
+
 module.exports = (app) => {
     app.use(`${app.get('base path')}/oc/api/v1`, router);
 };
@@ -241,21 +244,34 @@ function cacheInstance(req, res, next) {
         instanceAttachments: req.body.instance_attachments,
     };
 
-    // Encode attachment url filename
+    // Encode the instanceAttachments key and filename in URL
+    // if they contain characters that are not allowed in a URL
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI#description
+    // https://datatracker.ietf.org/doc/html/rfc2396
     if (
         'instanceAttachments' in survey &&
         survey.instanceAttachments !== undefined
     ) {
-        if (Object.keys(survey.instanceAttachments).length > 0) {
-            Object.keys(survey.instanceAttachments).forEach((key) => {
-                let attachmentUrl = survey.instanceAttachments[key];
+        const instanceAttachments = { ...survey.instanceAttachments };
+        const instanceAttachmentsKeys = Object.keys(instanceAttachments);
+        if (instanceAttachmentsKeys.length > 0) {
+            instanceAttachmentsKeys.forEach((key) => {
+                let attachmentUrl = instanceAttachments[key];
                 const attachmentUrlFilename =
                     utils.getUrlFilename(attachmentUrl);
-                attachmentUrl = attachmentUrl.replace(
-                    attachmentUrlFilename,
-                    encodeURIComponent(attachmentUrlFilename)
-                );
-                survey.instanceAttachments[key] = attachmentUrl;
+                if (!SAFE_FILE_IN_URL_RE.test(attachmentUrlFilename)) {
+                    attachmentUrl = attachmentUrl.replace(
+                        attachmentUrlFilename,
+                        encodeURIComponent(attachmentUrlFilename)
+                    );
+                    survey.instance = survey.instance.replace(
+                        attachmentUrlFilename,
+                        encodeURIComponent(attachmentUrlFilename)
+                    );
+                }
+                survey.instanceAttachments[encodeURIComponent(key)] =
+                    attachmentUrl;
+                delete survey.instanceAttachments[key];
             });
         }
     }
