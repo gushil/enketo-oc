@@ -87,7 +87,11 @@ const localize = (container, lng) => {
         })
         .then(() => {
             list.forEach((el) => {
-                const key = el.dataset.i18n;
+                let key = el.dataset.i18n;
+                // translation key for element with i18nNumber is i18n-i18nNumber
+                if (el.dataset.i18nNumber) {
+                    key = `${key}-${el.dataset.i18nNumber}`;
+                }
                 if (key) {
                     let options = {};
                     // quick hack for __icon__ replacement
@@ -103,10 +107,19 @@ const localize = (container, lng) => {
                         };
                     }
 
-                    // Update cache only if the translation is new or has changed
-                    const translationText = t(key, options);
-                    if (!cache[key] || translationText !== cache[key]) {
-                        cache[key] = translationText;
+                    // Insert cache only if the translation is new
+                    if (!cache[key]) {
+                        let translationKey = key;
+                        // translationKey for element with i18nNumber is i18n without i18nNumber
+                        if (el.dataset.i18nNumber) {
+                            translationKey = key.substring(
+                                0,
+                                translationKey.length -
+                                    el.dataset.i18nNumber.toString().length -
+                                    1
+                            );
+                        }
+                        cache[key] = t(translationKey, options);
                     }
 
                     // This assumes that if the element has a placeholder, that's the thing that
