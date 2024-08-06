@@ -37,6 +37,19 @@ class Widget {
         this.question = element.closest('.question');
         this._props = this._getProps();
 
+        // Based on https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete
+        // set autocomplete off for all elements that can have autocomplete attribute
+        if (
+            (this.element.nodeName.toLowerCase() === 'input' &&
+                ['text', 'number'].includes(
+                    this.element.getAttribute('type')
+                )) ||
+            this.element.nodeName.toLowerCase() === 'textarea' ||
+            this.element.nodeName.toLowerCase() === 'select'
+        ) {
+            this.element.setAttribute('autocomplete', 'off');
+        }
+
         // Some widgets (e.g. ImageMap) initialize asynchronously and init returns a promise.
         return this._init() || this;
     }
