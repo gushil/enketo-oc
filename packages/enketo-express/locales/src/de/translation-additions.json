@@ -277,6 +277,12 @@
         },
         "validate": {
             "btn": "Validieren"
+        },
+        "exit": {
+            "btn": "Später beenden"
+        },
+        "done": {
+            "btn": "Ich bin fertig"
         }
     },
     "geopicker": {
