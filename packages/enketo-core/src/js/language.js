@@ -147,12 +147,7 @@ export default {
                 });
         }
 
-        let dir = 'ltr';
-        if (this.formLanguages) {
-            dir =
-                this.formLanguages.querySelector(`[value="${lang}"]`).dataset
-                    .dir || 'ltr';
-        }
+        const dir = this.formLanguages?.querySelector(`[value="${lang}"]`)?.dataset.dir || 'ltr';
         const translations = [...group.querySelectorAll('[lang]')];
 
         this.form.view.html.setAttribute('dir', dir);
