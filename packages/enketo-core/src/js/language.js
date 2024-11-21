@@ -23,6 +23,9 @@ export default {
      * @param {string} overrideLang - override language IANA subtag
      */
     init(overrideLang) {
+        // Set default language to 'en'
+        // Will be used if form is not initialized with a language 
+        // and overrideLang is provided
         const DEFAULT_LANG = 'en';
 
         if (!this.form) {
@@ -42,6 +45,9 @@ export default {
 
         if (!formLanguages) {
             if (overrideLang) {
+                // Set form languages to default and overrideLang
+                // if overrideLang is provided
+                // and form is not initialized with a language
                 this.languages = [DEFAULT_LANG, overrideLang];
             } else {
                 return;
