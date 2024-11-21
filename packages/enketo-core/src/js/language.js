@@ -24,7 +24,7 @@ export default {
      */
     init(overrideLang) {
         // Set default language to 'en'
-        // Will be used if form is not initialized with a language 
+        // Will be used if form is not initialized with a language
         // and overrideLang is provided
         const DEFAULT_LANG = 'en';
 
