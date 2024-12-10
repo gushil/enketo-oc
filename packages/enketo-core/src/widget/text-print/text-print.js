@@ -43,6 +43,7 @@ class TextPrintWidget extends Widget {
                 previousElement.classList.contains('date')
             ) {
                 previousElement.classList.add('print-hide');
+                this.element.value = 'MaskedXXXXXXX';
             }
 
             this.widget = this.element.parentElement.querySelector(
