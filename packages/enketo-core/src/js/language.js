@@ -23,6 +23,11 @@ export default {
      * @param {string} overrideLang - override language IANA subtag
      */
     init(overrideLang) {
+        // Set default language to 'en'
+        // Will be used if form is not initialized with a language
+        // and overrideLang is provided
+        const DEFAULT_LANG = 'en';
+
         if (!this.form) {
             throw new Error(
                 'Language module not correctly instantiated with form property.'
@@ -39,13 +44,21 @@ export default {
             this.form.view.html.querySelector('#form-languages');
 
         if (!formLanguages) {
-            return;
+            if (overrideLang) {
+                // Set form languages to default and overrideLang
+                // if overrideLang is provided
+                // and form is not initialized with a language
+                this.languages = [DEFAULT_LANG, overrideLang];
+            } else {
+                return;
+            }
+        } else {
+            this.languages = [...formLanguages.querySelectorAll('option')].map(
+                (option) => option.value
+            );
         }
 
-        this.languages = [...formLanguages.querySelectorAll('option')].map(
-            (option) => option.value
-        );
-        if (langSelector) {
+        if (formLanguages && langSelector) {
             langSelector.append(formLanguages);
             if (this.languages.length > 1) {
                 langSelector.classList.remove('hide');
@@ -53,7 +66,8 @@ export default {
         }
         this.formLanguages = root.querySelector('#form-languages');
         this.defaultLanguage =
-            this.formLanguages.dataset.defaultLang || undefined;
+            (this.formLanguages && this.formLanguages.dataset.defaultLang) ||
+            undefined;
 
         if (
             overrideLang &&
@@ -66,13 +80,15 @@ export default {
             this._currentLang = this.defaultLanguage || this.languages[0] || '';
         }
 
-        const langOption = this.formLanguages.querySelector(
-            `[value="${this._currentLang}"]`
-        );
-        const currentDirectionality =
-            (langOption && langOption.dataset.dir) || 'ltr';
+        let currentDirectionality = 'ltr';
+        if (this.formLanguages) {
+            const langOption = this.formLanguages.querySelector(
+                `[value="${this._currentLang}"]`
+            );
+            currentDirectionality = langOption && langOption.dataset.dir;
 
-        this.formLanguages.value = this._currentLang;
+            this.formLanguages.value = this._currentLang;
+        }
 
         this.form.view.html.setAttribute('dir', currentDirectionality);
 
@@ -80,11 +96,16 @@ export default {
             return;
         }
 
-        this.formLanguages.addEventListener(events.Change().type, (event) => {
-            event.preventDefault();
-            this._currentLang = event.target.value;
-            this.setFormUi(this._currentLang);
-        });
+        if (this.formLanguages) {
+            this.formLanguages.addEventListener(
+                events.Change().type,
+                (event) => {
+                    event.preventDefault();
+                    this._currentLang = event.target.value;
+                    this.setFormUi(this._currentLang);
+                }
+            );
+        }
 
         this.form.view.html.addEventListener(events.AddRepeat().type, (event) =>
             this.setFormUi(this._currentLang, event.target)
@@ -133,8 +154,8 @@ export default {
         }
 
         const dir =
-            this.formLanguages.querySelector(`[value="${lang}"]`).dataset.dir ||
-            'ltr';
+            this.formLanguages?.querySelector(`[value="${lang}"]`)?.dataset
+                .dir || 'ltr';
         const translations = [...group.querySelectorAll('[lang]')];
 
         this.form.view.html.setAttribute('dir', dir);
