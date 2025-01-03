@@ -50,20 +50,20 @@ class TextPrintWidget extends Widget {
         const className = 'print-input-text';
         const printElement = document.createElement('div');
         printElement.classList.add(className, 'widget');
-        
+
         printElement.innerHTML = this.element.value.replace(/\n/g, '<br>');
         this.element.after(printElement);
         this.element.classList.add('print-hide');
-        
+
         this.widget = printElement;
     }
 
     _removeWidget() {
         this.element.classList.remove('print-hide');
-        
+
         const previousElement = this.element.previousElementSibling;
         const isDateWidget = previousElement?.classList.contains('date');
-        
+
         // If previous element is a date widget, change its value to actual value
         if (isDateWidget) {
             const dateInputElement = previousElement.querySelector('input');

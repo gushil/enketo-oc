@@ -557,13 +557,13 @@ function printOcForm() {
 
     return new Promise((resolve, reject) => {
         const cleanup = () => {
-            textPrints.forEach(textPrint => {
+            textPrints.forEach((textPrint) => {
                 textPrint.dispatchEvent(events.DePrintify());
             });
             if (historyAdded) {
-                return new Promise(resolveCleanup => {
+                return new Promise((resolveCleanup) => {
                     setTimeout(() => {
-                        dns.forEach(dn => {
+                        dns.forEach((dn) => {
                             dn.dispatchEvent(events.DePrintify());
                         });
                         resolveCleanup();
@@ -580,12 +580,12 @@ function printOcForm() {
 
             if (format.queries === 'yes') {
                 historyAdded = true;
-                dns.forEach(dn => {
+                dns.forEach((dn) => {
                     dn.dispatchEvent(events.Printify());
                 });
             }
 
-            textPrints.forEach(textPrint => {
+            textPrints.forEach((textPrint) => {
                 textPrint.dispatchEvent(events.Printify());
             });
 
@@ -593,12 +593,12 @@ function printOcForm() {
                 return printGrid(format)
                     .then(() => cleanup())
                     .then(resolve)
-                    .catch(error => {
+                    .catch((error) => {
                         cleanup().then(() => reject(error));
                     });
             }
 
-            return new Promise(resolvePrint => {
+            return new Promise((resolvePrint) => {
                 setTimeout(() => {
                     window.print();
                     resolvePrint();
@@ -606,18 +606,19 @@ function printOcForm() {
             })
                 .then(() => cleanup())
                 .then(resolve)
-                .catch(error => {
+                .catch((error) => {
                     cleanup().then(() => reject(error));
                 });
         };
 
-        const promptInputs = (formTheme === 'grid' || (!formTheme && printHelper.isGrid())) 
-            ? gridInputs 
-            : regularInputs;
+        const promptInputs =
+            formTheme === 'grid' || (!formTheme && printHelper.isGrid())
+                ? gridInputs
+                : regularInputs;
 
         prompt(texts, options, promptInputs)
             .then(handlePrint)
-            .catch(error => {
+            .catch((error) => {
                 cleanup().then(() => reject(error));
             });
     });
