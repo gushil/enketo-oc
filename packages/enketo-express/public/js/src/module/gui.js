@@ -553,59 +553,73 @@ function printOcForm() {
     const textPrints = document.querySelectorAll(
         '.question:not(.or-appearance-autocomplete):not(.or-appearance-url) > input[type=text]:not(.ignore):not([data-for]), .question:not(.or-appearance-autocomplete):not(.or-appearance-url) > textarea:not(.ignore):not([data-for])'
     );
-    let historyAdded;
+    let historyAdded = false;
 
-    return new Promise((resolve) => {
-        if (formTheme === 'grid' || (!formTheme && printHelper.isGrid())) {
-            return prompt(texts, options, gridInputs).then((format) => {
-                if (!format) {
-                    return;
-                }
-                if (format.queries === 'yes') {
-                    historyAdded = true;
-                    dns.forEach((dn) => {
-                        dn.dispatchEvent(events.Printify());
-                    });
-                }
-                textPrints.forEach((textPrint) => {
-                    textPrint.dispatchEvent(events.Printify());
-                });
-
-                return printGrid(format).then(resolve);
+    return new Promise((resolve, reject) => {
+        const cleanup = () => {
+            textPrints.forEach(textPrint => {
+                textPrint.dispatchEvent(events.DePrintify());
             });
-        }
-        return prompt(texts, options, regularInputs).then((format) => {
-            if (!format) {
-                return;
+            if (historyAdded) {
+                return new Promise(resolveCleanup => {
+                    setTimeout(() => {
+                        dns.forEach(dn => {
+                            dn.dispatchEvent(events.DePrintify());
+                        });
+                        resolveCleanup();
+                    }, 1000);
+                });
             }
+            return Promise.resolve();
+        };
+
+        const handlePrint = (format) => {
+            if (!format) {
+                return cleanup().then(resolve);
+            }
+
             if (format.queries === 'yes') {
                 historyAdded = true;
-                dns.forEach((dn) => {
+                dns.forEach(dn => {
                     dn.dispatchEvent(events.Printify());
                 });
             }
-            textPrints.forEach((textPrint) => {
+
+            textPrints.forEach(textPrint => {
                 textPrint.dispatchEvent(events.Printify());
             });
-            setTimeout(window.print, 100);
-            resolve();
-        });
-    }).then(() => {
-        textPrints.forEach((textPrint) => {
-            textPrint.dispatchEvent(events.DePrintify());
-        });
-        if (!historyAdded) {
-            return;
-        }
 
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                dns.forEach((dn) => {
-                    dn.dispatchEvent(events.DePrintify());
+            if (formTheme === 'grid' || (!formTheme && printHelper.isGrid())) {
+                return printGrid(format)
+                    .then(() => cleanup())
+                    .then(resolve)
+                    .catch(error => {
+                        cleanup().then(() => reject(error));
+                    });
+            }
+
+            return new Promise(resolvePrint => {
+                setTimeout(() => {
+                    window.print();
+                    resolvePrint();
+                }, 100);
+            })
+                .then(() => cleanup())
+                .then(resolve)
+                .catch(error => {
+                    cleanup().then(() => reject(error));
                 });
-                resolve();
-            }, 1000);
-        });
+        };
+
+        const promptInputs = (formTheme === 'grid' || (!formTheme && printHelper.isGrid())) 
+            ? gridInputs 
+            : regularInputs;
+
+        prompt(texts, options, promptInputs)
+            .then(handlePrint)
+            .catch(error => {
+                cleanup().then(() => reject(error));
+            });
     });
 }
 
@@ -648,19 +662,19 @@ function printGrid(format, delay = 800) {
         setTimeout(() => {
             printHelper
                 .fixGrid(format)
-                .then(window.print)
+                .then(() => window.print())
                 .catch(console.error)
                 .then(() => {
                     if (swapped) {
-                        return new Promise((resolve) => {
+                        return new Promise((innerResolve) => {
                             setTimeout(() => {
                                 printHelper.styleReset();
-                                resolve();
+                                innerResolve();
                             }, 500);
                         });
                     }
-                });
-            resolve();
+                })
+                .finally(() => resolve());
         }, delay)
     );
 }

@@ -28,35 +28,57 @@ class TextPrintWidget extends Widget {
     }
 
     _addWidget() {
-        if (!this.widget) {
-            const className = 'print-input-text';
-            const printElement = document.createElement('div');
-            printElement.classList.add(className, 'widget');
-
-            this.element.after(printElement);
-            this.element.classList.add('print-hide');
-
-            // If previous element is a fake input in date widget, hide it as well
-            const previousElement = this.element.previousElementSibling;
-            if (
-                previousElement !== null &&
-                previousElement.classList.contains('date')
-            ) {
-                previousElement.classList.add('print-hide');
-                this.element.value = 'MaskedXXXXXXX';
-            }
-
-            this.widget = this.element.parentElement.querySelector(
-                `.${className}`
-            );
-            this.widget.innerHTML = this.element.value.replace(/\n/g, '<br>');
+        if (this.widget) {
+            return;
         }
+
+        const previousElement = this.element.previousElementSibling;
+        const isDateWidget = previousElement?.classList.contains('date');
+
+        // If previous element is a date widget, change its value to masked value
+        if (isDateWidget) {
+            const dateInputElement = previousElement.querySelector('input');
+            if (dateInputElement) {
+                const elementValue = this.element.value || '';
+                dateInputElement.dataset.actualValue = elementValue;
+                dateInputElement.value = elementValue ? 'MaskedXXXXXXX' : '';
+            }
+            return;
+        }
+
+        // Create print-only element with value from original input
+        const className = 'print-input-text';
+        const printElement = document.createElement('div');
+        printElement.classList.add(className, 'widget');
+        
+        printElement.innerHTML = this.element.value.replace(/\n/g, '<br>');
+        this.element.after(printElement);
+        this.element.classList.add('print-hide');
+        
+        this.widget = printElement;
     }
 
     _removeWidget() {
+        this.element.classList.remove('print-hide');
+        
+        const previousElement = this.element.previousElementSibling;
+        const isDateWidget = previousElement?.classList.contains('date');
+        
+        // If previous element is a date widget, change its value to actual value
+        if (isDateWidget) {
+            const dateInputElement = previousElement.querySelector('input');
+            const actualValue = dateInputElement?.dataset.actualValue;
+            if (actualValue) {
+                dateInputElement.value = actualValue;
+                // Remove the data attribute
+                delete dateInputElement.dataset.actualValue;
+            }
+            return;
+        }
+
+        // Remove the print-only element
         if (this.widget) {
-            this.element.classList.remove('print-hide');
-            this.element.parentElement.removeChild(this.widget);
+            this.widget.remove();
             this.widget = null;
         }
     }
