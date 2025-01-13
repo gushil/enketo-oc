@@ -38,10 +38,20 @@ class TextPrintWidget extends Widget {
         // If previous element is a date widget, change its value to masked value
         if (isDateWidget) {
             const dateInputElement = previousElement.querySelector('input');
-            if (dateInputElement) {
+            if (
+                dateInputElement &&
+                this.element.hasAttribute('data-oc-external') &&
+                this.element.getAttribute('data-oc-external') === 'contactdata'
+            ) {
                 const elementValue = this.element.value || '';
                 dateInputElement.dataset.actualValue = elementValue;
                 dateInputElement.value = elementValue ? 'MaskedXXXXXXX' : '';
+                // Remove placeholder if value is empty
+                if (!elementValue) {
+                    dateInputElement.dataset.previousPlaceholder =
+                        dateInputElement.placeholder;
+                    dateInputElement.placeholder = '';
+                }
             }
             return;
         }
@@ -72,6 +82,13 @@ class TextPrintWidget extends Widget {
                 dateInputElement.value = actualValue;
                 // Remove the data attribute
                 delete dateInputElement.dataset.actualValue;
+            }
+            // Restore placeholder if it was set
+            const previousPlaceholder =
+                dateInputElement?.dataset.previousPlaceholder;
+            if (previousPlaceholder) {
+                dateInputElement.placeholder = previousPlaceholder;
+                delete dateInputElement.dataset.previousPlaceholder;
             }
             return;
         }
