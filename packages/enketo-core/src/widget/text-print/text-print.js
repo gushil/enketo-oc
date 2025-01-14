@@ -25,6 +25,18 @@ class TextPrintWidget extends Widget {
             events.DePrintify().type,
             this._removeWidget.bind(this)
         );
+        this.question.addEventListener(
+            events.ClickPrintify().type,
+            this._beforePrintByClick.bind(this)
+        );
+        this.widgetClassName = 'print-input-text';
+        this.hideClassName = 'print-hide';
+        this.maskedValue = 'MaskedXXXXXXX';
+    }
+
+    _isPreviousElementDateWidget() {
+        const previousElement = this.element.previousElementSibling;
+        return previousElement?.classList.contains('date');
     }
 
     _addWidget() {
@@ -32,71 +44,59 @@ class TextPrintWidget extends Widget {
             return;
         }
 
-        const previousElement = this.element.previousElementSibling;
-        const isDateWidget = previousElement?.classList.contains('date');
+        let elementValue = this.element.value;
 
-        // If previous element is a date widget, change its value to masked value
-        if (isDateWidget) {
-            const dateInputElement = previousElement.querySelector('input');
+        // If previous element is a date widget, hide it and change its value to masked value
+        if (this._isPreviousElementDateWidget()) {
+            this.element.previousElementSibling.classList.add(
+                this.hideClassName
+            );
             if (
-                dateInputElement &&
                 this.element.hasAttribute('data-oc-external') &&
                 this.element.getAttribute('data-oc-external') === 'contactdata'
             ) {
-                const elementValue = this.element.value || '';
-                dateInputElement.dataset.actualValue = elementValue;
-                dateInputElement.value = elementValue ? 'MaskedXXXXXXX' : '';
-                // Remove placeholder if value is empty
-                if (!elementValue) {
-                    dateInputElement.dataset.previousPlaceholder =
-                        dateInputElement.placeholder;
-                    dateInputElement.placeholder = '';
-                }
+                this.element.dataset.actualValue = elementValue;
+                elementValue = elementValue ? this.maskedValue : '';
             }
-            return;
         }
 
-        // Create print-only element with value from original input
-        const className = 'print-input-text';
+        // Create print-only element with value from elementValue
         const printElement = document.createElement('div');
-        printElement.classList.add(className, 'widget');
+        printElement.classList.add(this.widgetClassName, 'widget');
+        printElement.innerHTML = elementValue.replace(/\n/g, '<br>');
 
-        printElement.innerHTML = this.element.value.replace(/\n/g, '<br>');
         this.element.after(printElement);
-        this.element.classList.add('print-hide');
+        this.element.classList.add(this.hideClassName);
 
         this.widget = printElement;
     }
 
     _removeWidget() {
-        this.element.classList.remove('print-hide');
+        this.element.classList.remove(this.hideClassName);
 
-        const previousElement = this.element.previousElementSibling;
-        const isDateWidget = previousElement?.classList.contains('date');
-
-        // If previous element is a date widget, change its value to actual value
-        if (isDateWidget) {
-            const dateInputElement = previousElement.querySelector('input');
-            const actualValue = dateInputElement?.dataset.actualValue;
-            if (actualValue) {
-                dateInputElement.value = actualValue;
-                // Remove the data attribute
-                delete dateInputElement.dataset.actualValue;
-            }
-            // Restore placeholder if it was set
-            const previousPlaceholder =
-                dateInputElement?.dataset.previousPlaceholder;
-            if (previousPlaceholder) {
-                dateInputElement.placeholder = previousPlaceholder;
-                delete dateInputElement.dataset.previousPlaceholder;
-            }
-            return;
+        // If previous element is a date widget, show it again
+        if (this._isPreviousElementDateWidget()) {
+            this.element.previousElementSibling.classList.remove(
+                this.hideClassName
+            );
         }
 
         // Remove the print-only element
         if (this.widget) {
             this.widget.remove();
             this.widget = null;
+        }
+    }
+
+    _beforePrintByClick() {
+        // If previous element is a date widget and print widget is ready, change its value to actual value
+        if (this.widget && this._isPreviousElementDateWidget()) {
+            if (
+                this.widget.innerHTML === this.maskedValue &&
+                this.element.dataset.actualValue
+            ) {
+                this.widget.innerHTML = this.element.dataset.actualValue;
+            }
         }
     }
 }
