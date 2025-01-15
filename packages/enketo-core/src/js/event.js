@@ -259,6 +259,15 @@ function UpdateMaxSize() {
     return new CustomEvent('update-max-size', { bubbles: true });
 }
 
+/**
+ * Go to clickprintify text event.
+ *
+ * @return {CustomEvent} Custom "clickprintify" event (bubbling)
+ */
+function ClickPrintify() {
+    return new CustomEvent('clickprintify', { bubbles: true });
+}
+
 export default {
     DataUpdate,
     FakeFocus,
@@ -285,4 +294,5 @@ export default {
     Printify,
     DePrintify,
     UpdateMaxSize,
+    ClickPrintify,
 };
