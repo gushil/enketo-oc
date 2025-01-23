@@ -25,10 +25,6 @@ class TextPrintWidget extends Widget {
             events.DePrintify().type,
             this._removeWidget.bind(this)
         );
-        this.question.addEventListener(
-            events.ClickPrintify().type,
-            this._beforePrintByClick.bind(this)
-        );
         this.widgetClassName = 'print-input-text';
         this.hideClassName = 'print-hide';
         this.maskedValue = 'MaskedXXXXXXX';
@@ -44,20 +40,13 @@ class TextPrintWidget extends Widget {
             return;
         }
 
-        let elementValue = this.element.value;
+        const elementValue = this.element.value;
 
-        // If previous element is a date widget, hide it and change its value to masked value
+        // If previous element is a date widget, hide it
         if (this._isPreviousElementDateWidget()) {
             this.element.previousElementSibling.classList.add(
                 this.hideClassName
             );
-            if (
-                this.element.hasAttribute('data-oc-external') &&
-                this.element.getAttribute('data-oc-external') === 'contactdata'
-            ) {
-                this.element.dataset.actualValue = elementValue;
-                elementValue = elementValue ? this.maskedValue : '';
-            }
         }
 
         // Create print-only element with value from elementValue
@@ -85,18 +74,6 @@ class TextPrintWidget extends Widget {
         if (this.widget) {
             this.widget.remove();
             this.widget = null;
-        }
-    }
-
-    _beforePrintByClick() {
-        // If previous element is a date widget and print widget is ready, change its value to actual value
-        if (this.widget && this._isPreviousElementDateWidget()) {
-            if (
-                this.widget.innerHTML === this.maskedValue &&
-                this.element.dataset.actualValue
-            ) {
-                this.widget.innerHTML = this.element.dataset.actualValue;
-            }
         }
     }
 }
