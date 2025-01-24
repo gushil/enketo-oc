@@ -75,13 +75,13 @@ async function run(url) {
             const fs = await fsEl.getProperty('textContent');
             fieldsubmissions = Number(await fs.jsonValue());
         }
+        return fieldsubmissions;
     } catch (e) {
         e.status = e.status || 500;
         await page.close();
         throw e;
     } finally {
         await page.close();
-        return fieldsubmissions;
     }
 }
 
