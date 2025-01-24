@@ -11,13 +11,19 @@ class BrowserHandler {
     constructor() {
         const launchBrowser = async () => {
             this.browser = false;
-            this.browser = await puppeteer.launch({
-                headless: 'new',
-                devtools: false,
-                args,
-                userDataDir,
-            });
-            this.browser.on('disconnected', launchBrowser);
+            try {
+                this.browser = await puppeteer.launch({
+                    headless: 'new',
+                    devtools: false,
+                    args,
+                    userDataDir,
+                });
+                this.browser.on('disconnected', launchBrowser);
+            } catch (error) {
+                console.error('Failed to launch browser:', error);
+                this.browser = false;
+                setTimeout(launchBrowser, 5000);
+            }
         };
 
         (async () => {
@@ -27,13 +33,23 @@ class BrowserHandler {
 }
 
 const getBrowser = (handler) =>
-    new Promise((resolve) => {
+    new Promise((resolve, reject) => {
+        let attempts = 0;
+        const timeout = 30000;
+        const interval = 100;
+
         const browserCheck = setInterval(() => {
+            attempts++;
             if (handler.browser !== false) {
                 clearInterval(browserCheck);
                 resolve(handler.browser);
+            } else if (attempts * interval >= timeout) {
+                clearInterval(browserCheck);
+                const error = new Error('Browser launch timeout exceeded');
+                error.status = 500;
+                reject(error);
             }
-        }, 100);
+        }, interval);
     });
 
 module.exports = { BrowserHandler, getBrowser };

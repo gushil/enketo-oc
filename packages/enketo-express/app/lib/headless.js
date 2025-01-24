@@ -8,27 +8,46 @@ async function run(url) {
     if (!url) {
         throw new Error('No url provided');
     }
-    const browser = await getBrowser(browserHandler);
+
+    // Validate URL
+    let urlObj;
+    try {
+        urlObj = new URL(url);
+    } catch (e) {
+        const error = new Error('Invalid URL provided');
+        error.status = 400;
+        throw error;
+    }
+
+    let browser;
+    try {
+        browser = await getBrowser(browserHandler);
+    } catch (e) {
+        const error = new Error('Failed to launch browser');
+        error.status = 500;
+        throw error;
+    }
+
     const page = await browser.newPage();
 
-    // Turns request interceptor on
-    await page.setRequestInterception(true);
-
-    // Ignore certain resources
-    const ignoreTypes = ['image', 'stylesheet', 'media', 'font'];
-    page.on('request', (request) => {
-        if (ignoreTypes.includes(request.resourceType())) {
-            request.abort();
-        } else {
-            request.continue();
-        }
-    });
-
-    let fieldsubmissions;
-
     try {
+        // Turns request interceptor on
+        await page.setRequestInterception(true);
+
+        // Ignore certain resources
+        const ignoreTypes = ['image', 'stylesheet', 'media', 'font'];
+        page.on('request', (request) => {
+            if (ignoreTypes.includes(request.resourceType())) {
+                request.abort();
+            } else {
+                request.continue();
+            }
+        });
+
+        let fieldsubmissions;
+
         await page
-            .goto(url, { waitUntil: 'networkidle0', timeout })
+            .goto(urlObj.href, { waitUntil: 'networkidle0', timeout })
             .catch((e) => {
                 // Martijn has not been able to actually reach this code.
                 e.status = 400;
@@ -57,14 +76,13 @@ async function run(url) {
             fieldsubmissions = Number(await fs.jsonValue());
         }
     } catch (e) {
-        e.status = e.status || 400;
+        e.status = e.status || 500;
         await page.close();
         throw e;
+    } finally {
+        await page.close();
+        return fieldsubmissions;
     }
-
-    await page.close();
-
-    return fieldsubmissions;
 }
 
 module.exports = { run };

@@ -7,6 +7,7 @@ const { BrowserHandler, getBrowser } = require('./headless-browser');
 
 const browserHandler = new BrowserHandler();
 const { timeout } = config.headless;
+const MIN_PDF_SIZE = 1024; // 1KB as minimum valid PDF size
 
 /**
  * @typedef PdfGetOptions
@@ -29,6 +30,19 @@ const DEFAULTS = {
 };
 
 /**
+ * Validates that the PDF buffer is not empty or corrupted
+ * @param {Buffer} pdfBuffer - The generated PDF buffer
+ * @throws {Error} If PDF is invalid
+ */
+function validatePdf(pdfBuffer) {
+    if (!pdfBuffer || pdfBuffer.length < MIN_PDF_SIZE) {
+        const error = new Error('Generated PDF is invalid or empty');
+        error.status = 500;
+        throw error;
+    }
+}
+
+/**
  * Asynchronously gets pdf from url using Puppeteer.
  *
  * @static
@@ -49,15 +63,30 @@ async function get(
         throw new Error('No url provided');
     }
 
-    const urlObj = new URL(url);
-    urlObj.searchParams.append('format', format);
-    urlObj.searchParams.append('margin', margin);
-    urlObj.searchParams.append('landscape', landscape);
-    urlObj.searchParams.append('scale', scale);
+    // Validate URL
+    let urlObj;
+    try {
+        urlObj = new URL(url);
+        urlObj.searchParams.append('format', format);
+        urlObj.searchParams.append('margin', margin);
+        urlObj.searchParams.append('landscape', landscape);
+        urlObj.searchParams.append('scale', scale);
+    } catch (e) {
+        const error = new Error('Invalid URL provided');
+        error.status = 400;
+        throw error;
+    }
 
-    const browser = await getBrowser(browserHandler);
+    let browser;
+    try {
+        browser = await getBrowser(browserHandler);
+    } catch (e) {
+        const error = new Error('Failed to launch PDF generator');
+        error.status = 500;
+        throw error;
+    }
+
     const page = await browser.newPage();
-
     let pdf;
 
     try {
@@ -111,27 +140,33 @@ async function get(
             document.querySelectorAll('canvas').forEach(canvasToImage);
         });
 
-        pdf = await page.pdf({
-            landscape,
-            format,
-            margin: {
-                top: margin,
-                left: margin,
-                right: margin,
-                bottom: margin,
-            },
-            scale,
-            printBackground: true,
-            timeout,
-        });
+        pdf = await page
+            .pdf({
+                landscape,
+                format,
+                margin: {
+                    top: margin,
+                    left: margin,
+                    right: margin,
+                    bottom: margin,
+                },
+                scale,
+                printBackground: true,
+                timeout,
+            })
+            .catch((e) => {
+                e.status = 500;
+                throw e;
+            });
+
+        validatePdf(pdf);
     } catch (e) {
-        e.status = e.status || 400;
+        e.status = e.status || 500;
         await page.close();
         throw e;
     }
 
     await page.close();
-
     return pdf;
 }
 
