@@ -123,6 +123,7 @@ async function get(
             scale,
             printBackground: true,
             timeout,
+            preferCSSPageSize: true,
         });
     } catch (e) {
         e.status = e.status || 400;
