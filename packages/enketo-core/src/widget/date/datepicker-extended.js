@@ -3,8 +3,13 @@ import Widget from '../../js/widget';
 import support from '../../js/support';
 import types from '../../js/types';
 import { isNumber, getPasteData } from '../../js/utils';
-import 'bootstrap-datepicker';
 import '../../js/dropdown.jquery';
+
+import 'bootstrap-datepicker';
+window.jQuery = $; // Set jQuery globally for bootstrap-datepicker locales
+import('bootstrap-datepicker/dist/locales/bootstrap-datepicker.de.min');
+import('bootstrap-datepicker/dist/locales/bootstrap-datepicker.es.min');
+import('bootstrap-datepicker/dist/locales/bootstrap-datepicker.fr.min');
 
 /**
  * Extends eternicode's bootstrap-datepicker without changing the original.
@@ -28,6 +33,8 @@ class DatepickerExtended extends Widget {
     }
 
     _init() {
+        // 'en' is excluded; supportedLanguages must match the locales imported from bootstrap-datepicker.
+        this.supportedLanguages = ['de', 'es', 'fr'];
         this.settings = this.props.appearances.includes('year')
             ? {
                   format: 'yyyy',
@@ -192,14 +199,24 @@ class DatepickerExtended extends Widget {
     }
 
     enable() {
-        this.$fakeDateI.datepicker({
+        const datepickerOptions = {
             format: this.settings.format,
             autoclose: true,
             todayHighlight: true,
             startView: this.settings.startView,
             minViewMode: this.settings.minViewMode,
             forceParse: false,
-        });
+        };
+        const language = this.options?.formOpts?.language;
+        if (language) {
+            const langCode = language.split('-')[0];
+
+            if (this.supportedLanguages.includes(langCode)) {
+                datepickerOptions.language = langCode;
+            }
+        }
+
+        this.$fakeDateI.datepicker(datepickerOptions);
         this.$fakeDateI.prop('disabled', false);
         this.$fakeDateI.next('.btn-reset').prop('disabled', false);
     }
