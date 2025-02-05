@@ -5,6 +5,7 @@ import types from '../../js/types';
 import { isNumber, getPasteData } from '../../js/utils';
 import '../../js/dropdown.jquery';
 import 'bootstrap-datepicker';
+
 window.jQuery = $; // Set jQuery globally for bootstrap-datepicker locales
 import('bootstrap-datepicker/dist/locales/bootstrap-datepicker.de.min');
 import('bootstrap-datepicker/dist/locales/bootstrap-datepicker.es.min');
