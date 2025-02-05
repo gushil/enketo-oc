@@ -56,7 +56,7 @@ function init($group, opts = {}) {
     const group = $group && $group.length ? $group[0] : formElement;
 
     widgets.forEach((Widget) => {
-        _instantiate(Widget, group);
+        _instantiate(Widget, group, options);
     });
 
     return true;
@@ -133,8 +133,8 @@ function _getElements(group, selector) {
  * @param {typeof import('./widget').default} Widget
  * @param {Element} group - The element inside which widgets need to be created.
  */
-function _instantiate(Widget, group) {
-    const opts = {};
+function _instantiate(Widget, group, formOpts) {
+    const opts = { formOpts };
 
     if (!Widget.name) {
         return console.error("widget doesn't have a name");
