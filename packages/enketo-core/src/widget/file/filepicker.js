@@ -115,6 +115,14 @@ class Filepicker extends Widget {
      * Updates placeholder
      */
     _updatePlaceholder() {
+        // Set data-i18n and data-i18n-maxSize
+        // Will be translated by translator that use those attributes
+        this.fakeInput.setAttribute('data-i18n', 'filepicker.placeholder');
+        this.fakeInput.setAttribute(
+            'data-i18n-maxSize',
+            fileManager.getMaxSizeReadable() || '?MB'
+        );
+
         this.fakeInput.setAttribute(
             'placeholder',
             t('filepicker.placeholder', {

@@ -108,6 +108,11 @@ const localize = (container, lng) => {
                                 number: el.dataset.i18nNumber,
                             };
                         }
+                        if (el.dataset.i18nMaxsize) {
+                            options = {
+                                maxSize: el.dataset.i18nMaxsize,
+                            };
+                        }
                         cache[key] = t(el.dataset.i18n, options);
                     }
 
