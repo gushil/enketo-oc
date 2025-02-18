@@ -13,7 +13,7 @@ class TextPrintWidget extends Widget {
     static get selector() {
         // The [data-for] exclusion prevents "comment" widgets from being included.
         // It is not quite correct to do this but atm the "for" attribute in XForms is only used for comment widgets.
-        return '.question:not(.or-appearance-autocomplete):not(.or-appearance-url) > input[type=text]:not(.ignore):not([data-for]):not(.mask-date), .question:not(.or-appearance-autocomplete):not(.or-appearance-url) > textarea:not(.ignore):not([data-for])';
+        return '.question:not(.or-appearance-autocomplete):not(.or-appearance-url) > input[type=text]:not(.ignore):not([data-for]), .question:not(.or-appearance-autocomplete):not(.or-appearance-url) > textarea:not(.ignore):not([data-for])';
     }
 
     _init() {
@@ -25,8 +25,12 @@ class TextPrintWidget extends Widget {
             events.DePrintify().type,
             this._removeWidget.bind(this)
         );
-        this.widgetClassName = 'print-input-text';
+        this.question.addEventListener(
+            events.ClickPrintify().type,
+            this._beforePrintByClick.bind(this)
+        );
         this.hideClassName = 'print-hide';
+        this.maskedValue = 'MaskedXXXXXXX';
     }
 
     _isPreviousElementDateWidget() {
@@ -38,18 +42,25 @@ class TextPrintWidget extends Widget {
             return;
         }
 
-        const elementValue = this.element.value;
+        let elementValue = this.element.value;
 
-        // If previous element is a date widget, hide it
+        // If previous element is a date widget, hide it and change its value to masked value
         if (this._isPreviousElementDateWidget()) {
             this.element.previousElementSibling.classList.add(
                 this.hideClassName
             );
+            if (
+                this.element.hasAttribute('data-oc-external') &&
+                this.element.getAttribute('data-oc-external') === 'contactdata'
+            ) {
+                this.element.dataset.actualValue = elementValue;
+                elementValue = elementValue ? this.maskedValue : '';
+            }
         }
 
         // Create print-only element with value from elementValue
         const printElement = document.createElement('div');
-        printElement.classList.add(this.widgetClassName, 'widget');
+        printElement.classList.add('print-input-text', 'widget');
         printElement.innerHTML = elementValue.replace(/\n/g, '<br>');
 
         this.element.after(printElement);
@@ -72,6 +83,18 @@ class TextPrintWidget extends Widget {
         if (this.widget) {
             this.widget.remove();
             this.widget = null;
+        }
+    }
+
+    _beforePrintByClick() {
+        // If previous element is a date widget and print widget is ready, change its value to actual value
+        if (this.widget && this._isPreviousElementDateWidget()) {
+            if (
+                this.widget.innerHTML === this.maskedValue &&
+                this.element.dataset.actualValue
+            ) {
+                this.widget.innerHTML = this.element.dataset.actualValue;
+            }
         }
     }
 }

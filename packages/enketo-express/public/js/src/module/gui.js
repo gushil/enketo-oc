@@ -589,6 +589,10 @@ function printOcForm() {
                 textPrint.dispatchEvent(events.Printify());
             });
 
+            textPrints.forEach((textPrint) => {
+                textPrint.dispatchEvent(events.ClickPrintify());
+            });
+
             if (formTheme === 'grid' || (!formTheme && printHelper.isGrid())) {
                 return printGrid(format)
                     .then(() => cleanup())

@@ -255,10 +255,6 @@ function DePrintify() {
     return new CustomEvent('deprintify', { bubbles: true });
 }
 
-function UpdateMaxSize() {
-    return new CustomEvent('update-max-size', { bubbles: true });
-}
-
 /**
  * Go to clickprintify text event.
  *
@@ -266,6 +262,10 @@ function UpdateMaxSize() {
  */
 function ClickPrintify() {
     return new CustomEvent('clickprintify', { bubbles: true });
+}
+
+function UpdateMaxSize() {
+    return new CustomEvent('update-max-size', { bubbles: true });
 }
 
 export default {
@@ -293,6 +293,6 @@ export default {
     ChangeOption,
     Printify,
     DePrintify,
-    UpdateMaxSize,
     ClickPrintify,
+    UpdateMaxSize,
 };
