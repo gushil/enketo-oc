@@ -62,7 +62,10 @@ class TextPrintWidget extends Widget {
         const printElement = document.createElement('div');
         printElement.classList.add('print-input-text', 'widget');
         // Surround the element value with <p> to fix page breaking issue in print
-        printElement.innerHTML = '<p>' + elementValue.replace(/\n/g, '<br>') + '</p>';
+        printElement.innerHTML = `<p>${elementValue.replace(
+            /\n/g,
+            '<br>'
+        )}</p>`;
 
         this.element.after(printElement);
         this.element.classList.add(this.hideClassName);
