@@ -51,7 +51,9 @@ class TextPrintWidget extends Widget {
             );
             if (
                 this.element.hasAttribute('data-oc-external') &&
-                this.element.getAttribute('data-oc-external') === 'contactdata'
+                this.element
+                    .getAttribute('data-oc-external')
+                    .startsWith('contactdata')
             ) {
                 this.element.dataset.actualValue = elementValue;
                 elementValue = elementValue ? this.maskedValue : '';
@@ -93,11 +95,15 @@ class TextPrintWidget extends Widget {
     _beforePrintByClick() {
         // If previous element is a date widget and print widget is ready, change its value to actual value
         if (this.widget && this._isPreviousElementDateWidget()) {
+            // Using innerText to get widget value without surrounded <p>
             if (
-                this.widget.innerHTML === this.maskedValue &&
+                this.widget.innerText === this.maskedValue &&
                 this.element.dataset.actualValue
             ) {
-                this.widget.innerHTML = this.element.dataset.actualValue;
+                this.widget.innerHTML = this.widget.innerHTML.replace(
+                    this.maskedValue,
+                    this.element.dataset.actualValue
+                );
             }
         }
     }
