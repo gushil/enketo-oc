@@ -1365,6 +1365,9 @@ function _setFormEventHandlers() {
                             receiveMessage,
                             false
                         );
+                        if ('currentLanguage' in form) {
+                            event.formLanguage = form.currentLanguage;
+                        }
                         rc.postEventAsMessageToParentWindow(event);
                     } else {
                         // If this logic becomes complex, with autoqueries, rfc e.g., consider using
