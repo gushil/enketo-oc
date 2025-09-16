@@ -229,6 +229,13 @@ class DrawWidget extends Widget {
                     })
                     .click();
 
+                $(canvas).on('canvasreload', () => {
+                    if (that.cache) {
+                        that.pad
+                            .fromObjectURL(that.cache);
+                    }
+                });
+
                 that.enable();
             })
             .catch((error) => {
@@ -591,6 +598,7 @@ class DrawWidget extends Widget {
             canvas.width = canvas.offsetWidth * ratio;
             canvas.height = canvas.offsetHeight * ratio;
             canvas.getContext('2d').scale(ratio, ratio);
+            $(canvas).trigger('canvasreload');
         }
     }
 
