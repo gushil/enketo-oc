@@ -231,8 +231,7 @@ class DrawWidget extends Widget {
 
                 $(canvas).on('canvasreload', () => {
                     if (that.cache) {
-                        that.pad
-                            .fromObjectURL(that.cache);
+                        that.pad.fromObjectURL(that.cache);
                     }
                 });
 
