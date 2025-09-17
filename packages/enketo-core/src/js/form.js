@@ -451,24 +451,14 @@ Form.prototype.init = function () {
                 );
             }
 
-            this.repeatsInitialized = true;
-            this.repeats.init();
-
-            if (recalculationPaths.length > 0) {
-                this.view.html.removeEventListener(
-                    addRepeatType,
-                    tempHandlerAddRepeat
-                );
-                this.view.html.removeEventListener(
-                    removeRepeatType,
-                    tempHandlerRemoveRepeat
-                );
-            }
-
             this.calc.update({
                 allRepeats: true,
                 cloned: true,
             });
+
+            this.repeatsInitialized = true;
+            this.repeats.init();
+
             this.all = {};
         }
 
