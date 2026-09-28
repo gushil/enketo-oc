@@ -74,6 +74,9 @@
             "participanterror": {
                 "msg": [ "Il semble que certains champs nécessitent votre attention", "Veuillez les vérifier avant de continuer." ]
             },
+            "unsavedbeforesign": {
+                "msg": "Vos réponses n'ont pas fini d'être enregistrées. Veuillez vérifier votre connexion et réessayer dans un instant."
+            },
             "signatureservicenotavailable": {
                 "msg": "Le service Signature est actuellement indisponible. La question est restée sans réponse."
             },

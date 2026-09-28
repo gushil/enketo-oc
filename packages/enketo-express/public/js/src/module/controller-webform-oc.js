@@ -6,6 +6,7 @@
 
 import downloadUtils from 'enketo-core/src/js/download-utils';
 import $ from 'jquery';
+import reasons from 'enketo-core/src/js/reasons';
 import gui from './gui';
 import connection from './connection';
 import settings from './settings';
@@ -23,7 +24,6 @@ import records from './records-queue';
 import formCache from './form-cache';
 import FieldSubmissionQueue from './field-submission-queue';
 import rc from './controller-webform';
-import reasons from 'enketo-core/src/js/reasons';
 import { replaceMediaSources, replaceModelMediaSources } from './media';
 
 let fieldSubmissionQueue;
@@ -38,6 +38,10 @@ const formOptions = {
 };
 const inputUpdateEventBuffer = [];
 const delayChangeEventBuffer = [];
+// Tracks in-flight DataUpdate handling (e.g. awaiting fileManager.getCurrentFile()
+// for drawing/file widgets) that hasn't reached fieldSubmissionQueue yet, so
+// signing can wait for it instead of racing an empty/partial queue check.
+const pendingFieldSubmissions = [];
 
 /**
  * @typedef InstanceAttachment
@@ -1317,16 +1321,25 @@ function _setFormEventHandlers() {
             // Only now will we check for the deprecatedID value, which at this point should be (?)
             // populated at the time the instanceID dataupdate event is processed and added to the fieldSubmission queue.
             postHeartbeat();
-            filePromise.then((file) => {
-                fieldSubmissionQueue.addFieldSubmission(
-                    updated.fullPath,
-                    updated.xmlFragment,
-                    instanceId,
-                    form.deprecatedID,
-                    file
-                );
-                fieldSubmissionQueue.submitAll();
-            });
+            const pendingSubmission = filePromise
+                .then((file) => {
+                    fieldSubmissionQueue.addFieldSubmission(
+                        updated.fullPath,
+                        updated.xmlFragment,
+                        instanceId,
+                        form.deprecatedID,
+                        file
+                    );
+                    fieldSubmissionQueue.submitAll();
+                })
+                .finally(() => {
+                    const index =
+                        pendingFieldSubmissions.indexOf(pendingSubmission);
+                    if (index !== -1) {
+                        pendingFieldSubmissions.splice(index, 1);
+                    }
+                });
+            pendingFieldSubmissions.push(pendingSubmission);
         });
     } else {
         console.info(
@@ -1364,69 +1377,83 @@ function _setFormEventHandlers() {
                         'bare'
                     );
 
-                    return fieldSubmissionQueue.submitAll().then(() => {
-                        const unsaved =
-                            !fieldSubmissionQueue.enabled ||
-                            Object.keys(fieldSubmissionQueue.get()).length > 0;
+                    // Wait for any in-flight DataUpdate handling (e.g. a drawing
+                    // widget's canvas.toBlob()) to reach the queue before flushing
+                    // it, so a change made just before signing isn't missed.
+                    return Promise.all(pendingFieldSubmissions)
+                        .then(() => fieldSubmissionQueue.submitAll())
+                        .then(() => {
+                            const unsaved =
+                                !fieldSubmissionQueue.enabled ||
+                                Object.keys(fieldSubmissionQueue.get()).length >
+                                    0;
 
-                        if (unsaved) {
-                            resetQuestion();
-                            gui.alert(
-                                t('fieldsubmission.alert.unsavedbeforesign.msg')
-                            );
+                            if (unsaved) {
+                                resetQuestion();
+                                gui.alert(
+                                    t(
+                                        'fieldsubmission.alert.unsavedbeforesign.msg'
+                                    )
+                                );
 
-                            return;
-                        }
+                                return;
+                            }
 
-                        let timeoutId;
-                        const receiveMessage = (evt) => {
-                            // TODO: remove this temporary logging
-                            console.log(
-                                `evt.origin: ${evt.origin}, settings.parentWindowOrigin: ${settings.parentWindowOrigin}`
-                            );
-                            console.log('msg received: ', JSON.parse(evt.data));
-                            if (evt.origin === settings.parentWindowOrigin) {
-                                const msg = JSON.parse(evt.data);
+                            let timeoutId;
+                            const receiveMessage = (evt) => {
+                                // TODO: remove this temporary logging
+                                console.log(
+                                    `evt.origin: ${evt.origin}, settings.parentWindowOrigin: ${settings.parentWindowOrigin}`
+                                );
+                                console.log(
+                                    'msg received: ',
+                                    JSON.parse(evt.data)
+                                );
                                 if (
-                                    msg.event === 'signature-request-received'
+                                    evt.origin === settings.parentWindowOrigin
                                 ) {
-                                    clearTimeout(timeoutId);
-                                } else if (
-                                    msg.event === 'signature-request-failed'
-                                ) {
-                                    clearTimeout(timeoutId);
-                                    resetQuestion();
-                                    window.removeEventListener(
-                                        'message',
-                                        receiveMessage
+                                    const msg = JSON.parse(evt.data);
+                                    if (
+                                        msg.event ===
+                                        'signature-request-received'
+                                    ) {
+                                        clearTimeout(timeoutId);
+                                    } else if (
+                                        msg.event === 'signature-request-failed'
+                                    ) {
+                                        clearTimeout(timeoutId);
+                                        resetQuestion();
+                                        window.removeEventListener(
+                                            'message',
+                                            receiveMessage
+                                        );
+                                    }
+                                } else {
+                                    console.error(
+                                        'message received from untrusted source'
                                     );
                                 }
-                            } else {
-                                console.error(
-                                    'message received from untrusted source'
+                            };
+                            const failHandler = () => {
+                                resetQuestion();
+                                window.removeEventListener(
+                                    'message',
+                                    receiveMessage
                                 );
-                            }
-                        };
-                        const failHandler = () => {
-                            resetQuestion();
-                            window.removeEventListener(
+                                gui.alert(
+                                    t(
+                                        'fieldsubmission.alert.signatureservicenotavailable.msg'
+                                    )
+                                );
+                            };
+                            timeoutId = setTimeout(failHandler, 3 * 1000);
+                            window.addEventListener(
                                 'message',
-                                receiveMessage
+                                receiveMessage,
+                                false
                             );
-                            gui.alert(
-                                t(
-                                    'fieldsubmission.alert.signatureservicenotavailable.msg'
-                                )
-                            );
-                        };
-                        timeoutId = setTimeout(failHandler, 3 * 1000);
-                        window.addEventListener(
-                            'message',
-                            receiveMessage,
-                            false
-                        );
-                        rc.postEventAsMessageToParentWindow(event);
-                    });
+                            rc.postEventAsMessageToParentWindow(event);
+                        });
                 });
             }
         );

@@ -74,6 +74,9 @@
             "participanterror": {
                 "msg": [ "Parece que algunos campos necesitan atención", "Revíselos antes de continuar." ]
             },
+            "unsavedbeforesign": {
+                "msg": "Sus respuestas aún no han terminado de guardarse. Compruebe su conexión e inténtelo de nuevo en un momento."
+            },
             "signatureservicenotavailable": {
                 "msg": "El servicio de firma no está disponible actualmente. Se desmarcó la pregunta."
             },
