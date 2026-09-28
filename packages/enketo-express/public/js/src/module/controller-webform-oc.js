@@ -1344,7 +1344,40 @@ function _setFormEventHandlers() {
                 };
 
                 form.validate().then((valid) => {
-                    if (valid) {
+                    if (!valid) {
+                        resetQuestion();
+                        gui.alert(
+                            t('fieldsubmission.alert.participanterror.msg')
+                        );
+
+                        return;
+                    }
+
+                    // Same spinner + submitAll() pattern as _close(), but stricter: block
+                    // whenever the queue is disabled OR still has unsaved items, not just
+                    // when it's enabled with items left (see _close() for that check).
+                    gui.alert(
+                        `${t(
+                            'fieldsubmission.alert.close.msg1'
+                        )}<br/><div class="loader-animation-small" style="margin: 40px auto 0 auto;"/>`,
+                        t('fieldsubmission.alert.close.heading1'),
+                        'bare'
+                    );
+
+                    return fieldSubmissionQueue.submitAll().then(() => {
+                        const unsaved =
+                            !fieldSubmissionQueue.enabled ||
+                            Object.keys(fieldSubmissionQueue.get()).length > 0;
+
+                        if (unsaved) {
+                            resetQuestion();
+                            gui.alert(
+                                t('fieldsubmission.alert.unsavedbeforesign.msg')
+                            );
+
+                            return;
+                        }
+
                         let timeoutId;
                         const receiveMessage = (evt) => {
                             // TODO: remove this temporary logging
@@ -1393,14 +1426,7 @@ function _setFormEventHandlers() {
                             false
                         );
                         rc.postEventAsMessageToParentWindow(event);
-                    } else {
-                        // If this logic becomes complex, with autoqueries, rfc e.g., consider using
-                        // code in the _complete or _close functions to avoid duplication
-                        resetQuestion();
-                        gui.alert(
-                            t('fieldsubmission.alert.participanterror.msg')
-                        );
-                    }
+                    });
                 });
             }
         );
