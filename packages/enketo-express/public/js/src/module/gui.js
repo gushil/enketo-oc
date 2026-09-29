@@ -235,6 +235,14 @@ function alert(message, heading, level, duration) {
 }
 
 /**
+ * Closes any currently-shown modal dialog (e.g. a transient "bare" alert
+ * like the field-submission-queue spinner) without showing a new one.
+ */
+function close() {
+    vex.closeAll();
+}
+
+/**
  * Shows a confirmation dialog
  *
  * @param {?(object.<string, (string|boolean)>|string)=} content - In its simplest form this is just a string but it can
@@ -849,6 +857,7 @@ $(document).ready(() => {
 
 export default {
     alert,
+    close,
     confirm,
     prompt,
     feedback,

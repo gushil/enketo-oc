@@ -74,6 +74,9 @@
             "participanterror": {
                 "msg": [ "It looks like some fields need attention", "Please review them before proceeding." ]
             },
+            "unsavedbeforesign": {
+                "msg": "Your answers have not finished saving. Please check your connection and try again in a moment."
+            },
             "signatureservicenotavailable": {
                 "msg": "Signature service is currently not available. The question has been unchecked."
             },

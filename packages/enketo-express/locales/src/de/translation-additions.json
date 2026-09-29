@@ -77,6 +77,9 @@
             "participanterror": {
                 "msg": [ "Einige Felder scheinen Ihre Aufmerksamkeit zu benötigen.", "Überprüfen Sie sie, bevor Sie fortfahren." ]
             },
+            "unsavedbeforesign": {
+                "msg": "Ihre Antworten wurden noch nicht vollständig gespeichert. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es in Kürze erneut."
+            },
             "signatureservicenotavailable": {
                 "msg": "Der Signaturservice ist aktuell nicht verfügbar. Die Markierung der Frage wurde aufgehoben."
             },
