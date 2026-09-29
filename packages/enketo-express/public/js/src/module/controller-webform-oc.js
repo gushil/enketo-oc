@@ -42,6 +42,10 @@ const delayChangeEventBuffer = [];
 // for drawing/file widgets) that hasn't reached fieldSubmissionQueue yet, so
 // signing can wait for it instead of racing an empty/partial queue check.
 const pendingFieldSubmissions = [];
+// Guards the SignatureRequested handler against a second overlapping run
+// (e.g. the user dismisses the flush spinner, then unchecks and rechecks
+// the signature box while the first attempt is still resolving).
+let signingInProgress = false;
 
 /**
  * @typedef InstanceAttachment
@@ -1351,9 +1355,20 @@ function _setFormEventHandlers() {
         form.view.html.addEventListener(
             events.SignatureRequested().type,
             (event) => {
+                // Ignore a re-trigger (e.g. the user dismissed the spinner below,
+                // then unchecked and rechecked the box) while one flow is still
+                // resolving, so two overlapping flows can't run at once.
+                if (signingInProgress) {
+                    return;
+                }
+                signingInProgress = true;
+
                 const resetQuestion = () => {
                     event.target.checked = false;
                     event.target.dispatchEvent(events.Change());
+                };
+                const stopSigning = () => {
+                    signingInProgress = false;
                 };
 
                 form.validate().then((valid) => {
@@ -1362,6 +1377,7 @@ function _setFormEventHandlers() {
                         gui.alert(
                             t('fieldsubmission.alert.participanterror.msg')
                         );
+                        stopSigning();
 
                         return;
                     }
@@ -1383,6 +1399,16 @@ function _setFormEventHandlers() {
                     return Promise.all(pendingFieldSubmissions)
                         .then(() => fieldSubmissionQueue.submitAll())
                         .then(() => {
+                            // The spinner above has a close button and the flush
+                            // can take a moment; re-check in case the user backed
+                            // out (unchecked the box) while it was running.
+                            if (!event.target.checked) {
+                                gui.close();
+                                stopSigning();
+
+                                return;
+                            }
+
                             const unsaved =
                                 !fieldSubmissionQueue.enabled ||
                                 Object.keys(fieldSubmissionQueue.get()).length >
@@ -1395,6 +1421,7 @@ function _setFormEventHandlers() {
                                         'fieldsubmission.alert.unsavedbeforesign.msg'
                                     )
                                 );
+                                stopSigning();
 
                                 return;
                             }
@@ -1418,15 +1445,18 @@ function _setFormEventHandlers() {
                                         'signature-request-received'
                                     ) {
                                         clearTimeout(timeoutId);
+                                        stopSigning();
                                     } else if (
                                         msg.event === 'signature-request-failed'
                                     ) {
                                         clearTimeout(timeoutId);
+                                        gui.close();
                                         resetQuestion();
                                         window.removeEventListener(
                                             'message',
                                             receiveMessage
                                         );
+                                        stopSigning();
                                     }
                                 } else {
                                     console.error(
@@ -1445,6 +1475,7 @@ function _setFormEventHandlers() {
                                         'fieldsubmission.alert.signatureservicenotavailable.msg'
                                     )
                                 );
+                                stopSigning();
                             };
                             timeoutId = setTimeout(failHandler, 3 * 1000);
                             window.addEventListener(
@@ -1452,7 +1483,15 @@ function _setFormEventHandlers() {
                                 receiveMessage,
                                 false
                             );
+                            gui.close();
                             rc.postEventAsMessageToParentWindow(event);
+                        })
+                        .catch(() => {
+                            resetQuestion();
+                            gui.alert(
+                                t('fieldsubmission.alert.unsavedbeforesign.msg')
+                            );
+                            stopSigning();
                         });
                 });
             }
