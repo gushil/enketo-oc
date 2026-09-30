@@ -174,7 +174,7 @@ Specifies the name of a query parameter that will be copied from an Enketo URL t
 
 ## preview form hosts
 
-List of hosts that preview-by-URL (`/preview?form=<url>`) may fetch forms from. The server fetches and transforms the form, so this list stops the server from requesting other hosts. An entry is an exact hostname (`kpi.example.com`) or a suffix starting with a dot (`.example.com` allows every subdomain of example.com). Ports are ignored. Redirects are not followed. An empty list (the default) disables preview-by-URL. Environment variables: `ENKETO_PREVIEW_FORM_HOSTS_0`, `ENKETO_PREVIEW_FORM_HOSTS_1`, and so on.
+List of hosts that preview-by-URL (`/preview?form=<url>`) may fetch forms from. The server fetches and transforms the form, so this list stops the server from requesting other hosts. An entry is an exact host (`kpi.example.com`, or `kpi.example.com:8443` to allow a non-default port) or a suffix starting with a dot (`.example.com` allows every subdomain of example.com, on the default port only). Do not use a suffix of a shared domain that other people can add names under (for example `.ngrok.io`). Redirects are not followed. An empty list (the default) disables preview-by-URL. Environment variables: `ENKETO_PREVIEW_FORM_HOSTS_0`, `ENKETO_PREVIEW_FORM_HOSTS_1`, and so on.
 
 ## 👉 redis
 

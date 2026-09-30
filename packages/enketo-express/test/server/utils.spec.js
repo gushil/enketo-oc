@@ -235,11 +235,20 @@ describe('Utilities', () => {
     });
 
     describe('isAllowedPreviewFormUrl', () => {
-        const hosts = ['kpi.example.com', '.forms.example.org'];
+        const hosts = [
+            'kpi.example.com',
+            '.forms.example.org',
+            'fs.example.net:8443',
+        ];
 
         [
             ['https://kpi.example.com/api/v2/asset_snapshots/a.xml', 'ok'],
-            ['http://KPI.example.com:8000/x.xml', 'ok'],
+            ['http://KPI.example.com/x.xml', 'ok'],
+            ['https://kpi.example.com:443/x.xml', 'ok'],
+            ['http://kpi.example.com:8000/x.xml', 'forbidden'],
+            ['https://t1.forms.example.org:8500/x.xml', 'forbidden'],
+            ['https://fs.example.net:8443/x.xml', 'ok'],
+            ['https://fs.example.net/x.xml', 'forbidden'],
             ['https://t1.forms.example.org/form-service/api/x.xml', 'ok'],
             ['https://forms.example.org/x.xml', 'forbidden'],
             ['https://evilforms.example.org/x.xml', 'forbidden'],

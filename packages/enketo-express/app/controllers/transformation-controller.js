@@ -17,6 +17,9 @@ const mediaLib = require('../lib/media');
 
 const router = express.Router();
 
+// OC-28872
+const INVALID_PREVIEW_URL = 'Bad Request. Form URL is invalid.';
+
 // var debug = require( 'debug' )( 'transformation-controller' );
 
 module.exports = (app) => {
@@ -161,7 +164,7 @@ async function getPreviewParts(req, res, next) {
             try {
                 xformUrl = decodeURIComponent(xformUrl);
             } catch (error) {
-                throw new ResponseError(400);
+                throw new ResponseError(400, INVALID_PREVIEW_URL);
             }
         }
 
@@ -170,8 +173,14 @@ async function getPreviewParts(req, res, next) {
             config['preview form hosts'] || []
         );
 
-        if (check !== 'ok') {
-            throw new ResponseError(check === 'invalid' ? 400 : 403);
+        if (check === 'invalid') {
+            throw new ResponseError(400, INVALID_PREVIEW_URL);
+        }
+        if (check === 'forbidden') {
+            throw new ResponseError(
+                403,
+                'Forbidden. This form host is not allowed for preview.'
+            );
         }
 
         const xform = await communicator.getPreviewXForm(xformUrl);

@@ -168,7 +168,11 @@ describe('Transformation Controller', () => {
 
             const actual = await getTransformResult(403);
 
-            expect(actual).to.deep.equal({ code: 403 });
+            expect(actual).to.deep.equal({
+                code: 403,
+                message:
+                    'Forbidden. This form host is not allowed for preview.',
+            });
         });
     });
 
@@ -366,21 +370,29 @@ describe('Transformation Controller', () => {
                 'getPreviewXForm'
             );
 
-            await request(app)
+            const res = await request(app)
                 .post(`${basePath}/transform/xform`)
                 .type('form')
                 .send({ xformUrl: 'https://evil.com/a.xml' })
                 .expect(403);
 
+            expect(res.body.message).to.equal(
+                'Forbidden. This form host is not allowed for preview.'
+            );
+
             expect(getPreviewXForm.called).to.equal(false);
         });
 
         it('rejects invalid URLs', async () => {
-            await request(app)
+            const res = await request(app)
                 .post(`${basePath}/transform/xform`)
                 .type('form')
                 .send({ xformUrl: 'file:///etc/passwd' })
                 .expect(400);
+
+            expect(res.body.message).to.equal(
+                'Bad Request. Form URL is invalid.'
+            );
         });
 
         it('rejects requests without an xformUrl', async () => {

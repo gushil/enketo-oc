@@ -251,7 +251,8 @@ function preserveURLParser(str) {
 
 /**
  * OC-28872: checks a preview-by-URL form URL against the "preview form hosts" config.
- * An entry is an exact hostname, or a leading-dot suffix (".example.com").
+ * An entry is an exact host (`kpi.example.com`, or `kpi.example.com:8443` for a
+ * non-default port), or a leading-dot suffix (".example.com", default port only).
  *
  * @param {string} url - form URL
  * @param {string[]} hosts - allowed hosts
@@ -270,13 +271,12 @@ function isAllowedPreviewFormUrl(url, hosts) {
         return 'invalid';
     }
 
-    const { hostname } = parsed;
-    const allowed = hosts.some((host) => {
-        const entry = host.toLowerCase();
+    // `host` has the port only when it is not the scheme's default port
+    const { host } = parsed;
+    const allowed = hosts.some((item) => {
+        const entry = item.toLowerCase();
 
-        return entry.startsWith('.')
-            ? hostname.endsWith(entry)
-            : hostname === entry;
+        return entry.startsWith('.') ? host.endsWith(entry) : host === entry;
     });
 
     return allowed ? 'ok' : 'forbidden';
