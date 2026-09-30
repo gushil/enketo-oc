@@ -73,6 +73,18 @@ function getXForm(survey) {
 }
 
 /**
+ * OC-28872: obtains an XForm for preview-by-URL. No cookies or credentials are
+ * sent, and redirects are not followed, so the fetch stays on the allowed host.
+ *
+ * @static
+ * @param {string} url - form URL, already checked against "preview form hosts"
+ * @return { Promise<string> } a Promise that resolves with the XForm text
+ */
+function getPreviewXForm(url) {
+    return _request({ url, followRedirect: false });
+}
+
+/**
  * Obtains the XForm manifest
  *
  * @static
@@ -455,6 +467,7 @@ function _simplifyFormObj(formObj) {
 module.exports = {
     getXFormInfo,
     getXForm,
+    getPreviewXForm,
     getManifest,
     getMaxSize,
     authenticate,

@@ -561,4 +561,60 @@ describe('Communicator Library', () => {
             );
         });
     });
+
+    describe('getPreviewXForm (OC-28872)', () => {
+        afterEach(() => {
+            nock.cleanAll();
+        });
+
+        it('resolves with the form text', async () => {
+            nock('https://kpi.example.com')
+                .get('/f.xml')
+                .reply(200, '<h:html/>');
+
+            const xform = await communicator.getPreviewXForm(
+                'https://kpi.example.com/f.xml'
+            );
+
+            expect(xform).to.equal('<h:html/>');
+        });
+
+        it('does not follow redirects', async () => {
+            nock('https://kpi.example.com')
+                .get('/f.xml')
+                .reply(302, '', { Location: 'http://169.254.169.254/latest' });
+            const metadata = nock('http://169.254.169.254')
+                .get('/latest')
+                .reply(200, 'secret');
+
+            let caught = null;
+
+            try {
+                await communicator.getPreviewXForm(
+                    'https://kpi.example.com/f.xml'
+                );
+            } catch (error) {
+                caught = error;
+            }
+
+            expect(caught.status).to.equal(302);
+            expect(metadata.isDone()).to.equal(false);
+        });
+
+        it('passes on the upstream error status', async () => {
+            nock('https://kpi.example.com').get('/f.xml').reply(404);
+
+            let caught = null;
+
+            try {
+                await communicator.getPreviewXForm(
+                    'https://kpi.example.com/f.xml'
+                );
+            } catch (error) {
+                caught = error;
+            }
+
+            expect(caught.status).to.equal(404);
+        });
+    });
 });
