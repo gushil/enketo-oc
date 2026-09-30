@@ -2,6 +2,9 @@
 
 const baseESBuildConfig = require('../../../config/build.js');
 
+// OC-28872: the preview transform loads xslt-polyfill as a separate script
+const xsltPolyfillPath = require.resolve('xslt-polyfill');
+
 module.exports = (config) => {
     config.set({
         // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -31,7 +34,12 @@ module.exports = (config) => {
                 included: false,
                 served: true,
             },
+            { pattern: xsltPolyfillPath, included: false, served: true },
         ],
+
+        proxies: {
+            '/xslt-polyfill.min.js': `/absolute${xsltPolyfillPath}`,
+        },
 
         // list of files to exclude
         exclude: [
@@ -55,6 +63,10 @@ module.exports = (config) => {
                 '.geojson': 'json',
             },
             minify: false,
+
+            // OC-28872: bundles are written to a temp dir, so point the
+            // polyfill loader's `import.meta.url` at the Karma server instead.
+            define: { 'import.meta.url': 'document.baseURI' },
 
             // As far as I can tell, this is necessary because Karma fails to
             // resolve split chunks. It's not entirely clear if the split chunks

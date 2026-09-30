@@ -68,3 +68,9 @@ An OpenClinica theme was added that slightly tweaks the Formhub/Kobo themes. In 
 ### Translations
 
 A mechanism existing in the standard Enketo Express is used to add additional translation strings to the standard strings without augmenting the original files.
+
+### XSLT polyfill for preview-by-URL
+
+Browsers are removing XSLT (Chrome from Nov 17, 2026; Edge already corrupts XSLT output), and preview-by-URL (`/preview?form=<url>`) converts the XForm in the browser. So preview uses [xslt-polyfill](https://github.com/mfreed7/xslt_polyfill), which is libxslt and libxml2 compiled to WebAssembly, instead of the browser's XSLT. The build copies it to `public/js/build/xslt-polyfill.min.js`, and it is loaded only when a preview runs (`public/js/src/module/xslt-polyfill-loader.js`). If the polyfill file cannot be loaded, preview shows an error. Browsers that load the polyfill but cannot start it (older browsers) use their native XSLT instead. A custom Content Security Policy must allow `'wasm-unsafe-eval'` in `script-src`.
+
+Third-party licenses: xslt-polyfill is BSD-3-Clause (Copyright (c) 2025, Mason Freed); the build copies its license to `public/js/build/xslt-polyfill.LICENSE.txt`. It includes compiled [libxml2](https://gitlab.gnome.org/GNOME/libxml2/-/blob/master/Copyright) and [libxslt](https://gitlab.gnome.org/GNOME/libxslt/-/blob/master/Copyright), which are MIT licensed.

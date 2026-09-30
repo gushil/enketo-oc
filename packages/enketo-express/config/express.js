@@ -160,8 +160,9 @@ if (hsts && hsts.seconds !== 0) {
     }
     securityHeaders['Strict-Transport-Security'] = hstsDirectives.join('; ');
 }
+// OC-28872: 'wasm-unsafe-eval' lets preview run the XSLT polyfill (WebAssembly)
 const defaultCSP =
-    "default-src 'self'; script-src 'self' 'unsafe-inline' data:; style-src 'self' 'unsafe-inline' data:; img-src 'self' data:";
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' data:; style-src 'self' 'unsafe-inline' data:; img-src 'self' data:";
 const csp = app.get('csp');
 if (csp && csp.enabled) {
     const cspHeader = csp['report only']

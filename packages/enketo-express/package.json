@@ -66,7 +66,8 @@
         "valid-url": "^1.0.9",
         "vex-dialog-enketo": "github:enketo/vex-dialog-enketo#b6e0f01",
         "vex-js": "^4.1.0",
-        "xml2js": "^0.5.0"
+        "xml2js": "^0.5.0",
+        "xslt-polyfill": "1.0.29"
     },
     "devDependencies": {
         "@types/db.js": "^0.14.7",
@@ -88,7 +89,8 @@
         "enketo/translator": "./public/js/src/module/translator",
         "enketo/dialog": "./public/js/src/module/gui",
         "enketo/file-manager": "./public/js/src/module/file-manager",
-        "enketo/xpath-evaluator-binding": "./public/js/src/module/xpath-evaluator-binding"
+        "enketo/xpath-evaluator-binding": "./public/js/src/module/xpath-evaluator-binding",
+        "xslt-polyfill": "./public/js/src/module/xslt-polyfill-loader"
     },
     "entries": [
         "public/js/src/enketo-webform.js",

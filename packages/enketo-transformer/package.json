@@ -71,7 +71,8 @@
         "linkedom": "^0.14.26",
         "string-direction": "0.1.x",
         "undici": "^5.28.4",
-        "xpath-to-css": "^1.1.0"
+        "xpath-to-css": "^1.1.0",
+        "xslt-polyfill": "1.0.29"
     },
     "devDependencies": {
         "@prettier/sync": "^0.3.0",

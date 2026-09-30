@@ -539,6 +539,8 @@ async function getFormParts(props) {
         }
     } catch (error) {
         if (error.status === undefined) {
+            // OC-28872: keep the cause (e.g. a failed XSLT polyfill load) for support
+            console.error(error);
             error.message = t('error.formloadfailed');
         }
 
