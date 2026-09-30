@@ -458,13 +458,11 @@ const getExternalData = async (survey, model, options = {}) => {
  * @param {string} xformURL
  */
 const transformPreviewXForm = async (xformURL) => {
-    const { transform } = await import('enketo-transformer/web');
-    const response = await fetch(xformURL, {
-        credentials: 'same-origin',
-        mode: 'cors',
+    // OC-28872: transform on the server. Browsers are removing XSLT, which
+    // `enketo-transformer/web` needs (Chrome removes it on Nov 17).
+    const transformed = await _postData(getTransformURL(settings.basePath), {
+        xformUrl: xformURL,
     });
-    const xform = await response.text();
-    const transformed = await transform({ xform, openclinica: true });
 
     // Since media attachments will not be available for preview-by-URL, map
     // media file names to empty `data:` URLs.

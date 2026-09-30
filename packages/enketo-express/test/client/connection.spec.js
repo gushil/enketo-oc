@@ -4,7 +4,6 @@
  * @see {LastSavedFeatureSpec}
  */
 
-import { transform } from 'enketo-transformer/web';
 import utils from '../../public/js/src/module/utils';
 import connection from '../../public/js/src/module/connection';
 import settings from '../../public/js/src/module/settings';
@@ -270,22 +269,48 @@ describe('Connection', () => {
         // Note: last-saved and encryption functionality are tested under ./feature/*,
         // so are not redundantly tested here
 
-        it('requests the provided xformUrl', async () => {
-            expectedURL = xformUrl;
+        it('posts the provided xformUrl to the server transform (OC-28872)', async () => {
+            const previewForm =
+                '<form><img src="jr://images/a.png"/><a href="jr://images/b.png">b</a></form>';
 
-            const xformResponse = await fetch(xformUrl);
-            const xform = await xformResponse.text();
-            const expected = await transform({ xform });
+            window.fetch.restore();
+
+            const fetchStub = sandbox
+                .stub(window, 'fetch')
+                .callsFake(async (url) => {
+                    if (url === externalInstanceURL) {
+                        return { ok: false, status: 404 };
+                    }
+
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: () =>
+                            Promise.resolve({
+                                form: previewForm,
+                                model,
+                                languageMap: {},
+                            }),
+                    };
+                });
 
             const actual = await connection.getFormParts({
                 xformUrl,
                 isPreview: true,
             });
 
-            expect(typeof actual.form).to.equal('string');
-            expect(typeof actual.model).to.equal('string');
-            expect(actual.form).to.deep.equal(expected.form);
-            expect(actual.model).to.deep.equal(expected.model);
+            const [url, options] = fetchStub.firstCall.args;
+
+            expect(url).to.equal(`${basePath}/transform/xform`);
+            expect(options.method).to.equal('POST');
+            expect(options.body).to.equal(
+                `xformUrl=${encodeURIComponent(xformUrl)}`
+            );
+            expect(actual.form).to.equal(previewForm);
+            expect(actual.media).to.deep.equal({
+                'a.png': 'data:,',
+                'b.png': 'data:,',
+            });
         });
 
         it('fails to load XForms by URL outside of preview mode', async () => {
