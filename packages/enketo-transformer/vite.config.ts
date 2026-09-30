@@ -32,7 +32,10 @@ export default defineConfig(async () => {
 
     const webDeps = ['language-tags', 'string-direction'];
 
-    if (!isWeb) {
+    if (isWeb) {
+        // OC-28872: left to the consumer's bundler, which may load it lazily
+        external.push('xslt-polyfill');
+    } else {
         external.push(...webDeps);
     }
 

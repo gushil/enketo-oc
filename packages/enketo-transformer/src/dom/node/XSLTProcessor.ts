@@ -4,6 +4,9 @@ import type { XSLTStylesheet } from 'libxslt';
 import type { DOM } from '../abstract';
 
 /** @package */
+export const xsltReady = () => Promise.resolve();
+
+/** @package */
 export class XSLTProcessor {
     private parameters: Record<string, unknown> = {};
 

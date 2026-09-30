@@ -1,4 +1,9 @@
-import { DOMParser, XPathResult, XSLTProcessor } from 'enketo-transformer/dom';
+import {
+    DOMParser,
+    XPathResult,
+    XSLTProcessor,
+    xsltReady,
+} from 'enketo-transformer/dom';
 import type LibXMLJS from 'libxmljs';
 import type { DOM } from './dom/abstract';
 import { NodeTypes } from './dom/shared';
@@ -56,6 +61,9 @@ const getPreprocess = (
  */
 export const transform: Transform = async (survey) => {
     const { xform, markdown, media, openclinica, theme } = survey;
+
+    // OC-28872: the web build's XSLT polyfill loads WebAssembly first
+    await xsltReady();
 
     const xsltParams = openclinica
         ? {
