@@ -172,6 +172,10 @@ For GMaps layers you have the four options as tiles values: `"GOOGLE_SATELLITE"`
 
 Specifies the name of a query parameter that will be copied from an Enketo URL to the submission and formList requests. The value of this parameter can be used by the data server to e.g. track submission sources, perform form access control, or serve custom external data per user.
 
+## preview form hosts
+
+List of hosts that preview-by-URL (`/preview?form=<url>`) may fetch forms from. The server fetches and transforms the form, so this list stops the server from requesting other hosts. An entry is an exact hostname (`kpi.example.com`) or a suffix starting with a dot (`.example.com` allows every subdomain of example.com). Ports are ignored. Redirects are not followed. An empty list (the default) disables preview-by-URL. Environment variables: `ENKETO_PREVIEW_FORM_HOSTS_0`, `ENKETO_PREVIEW_FORM_HOSTS_1`, and so on.
+
 ## 👉 redis
 
 -   main -> host: The IP address of the main redis database instance. If installed on the same server as Enketo Express, the value is `"127.0.0.1"`

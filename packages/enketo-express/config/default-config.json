@@ -92,6 +92,7 @@
         }
     ],
     "query parameter to pass to submission": "",
+    "preview form hosts": [],
     "redis": {
         "main": {
             "host": "127.0.0.1",

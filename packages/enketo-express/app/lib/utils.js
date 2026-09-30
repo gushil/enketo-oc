@@ -249,6 +249,39 @@ function preserveURLParser(str) {
     return parsed;
 }
 
+/**
+ * OC-28872: checks a preview-by-URL form URL against the "preview form hosts" config.
+ * An entry is an exact hostname, or a leading-dot suffix (".example.com").
+ *
+ * @param {string} url - form URL
+ * @param {string[]} hosts - allowed hosts
+ * @return {'ok' | 'invalid' | 'forbidden'} result
+ */
+function isAllowedPreviewFormUrl(url, hosts) {
+    let parsed;
+
+    try {
+        parsed = new URL(url);
+    } catch (error) {
+        return 'invalid';
+    }
+
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return 'invalid';
+    }
+
+    const { hostname } = parsed;
+    const allowed = hosts.some((host) => {
+        const entry = host.toLowerCase();
+
+        return entry.startsWith('.')
+            ? hostname.endsWith(entry)
+            : hostname === entry;
+    });
+
+    return allowed ? 'ok' : 'forbidden';
+}
+
 module.exports = {
     getOpenRosaKey,
     getXformsManifestHash,
@@ -261,4 +294,5 @@ module.exports = {
     insecureAes192Decrypt,
     insecureAes192Encrypt,
     preserveURLParser,
+    isAllowedPreviewFormUrl,
 };

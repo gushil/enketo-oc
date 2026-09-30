@@ -233,4 +233,36 @@ describe('Utilities', () => {
             });
         });
     });
+
+    describe('isAllowedPreviewFormUrl', () => {
+        const hosts = ['kpi.example.com', '.forms.example.org'];
+
+        [
+            ['https://kpi.example.com/api/v2/asset_snapshots/a.xml', 'ok'],
+            ['http://KPI.example.com:8000/x.xml', 'ok'],
+            ['https://t1.forms.example.org/form-service/api/x.xml', 'ok'],
+            ['https://forms.example.org/x.xml', 'forbidden'],
+            ['https://evilforms.example.org/x.xml', 'forbidden'],
+            ['https://kpi.example.com@evil.com/x.xml', 'forbidden'],
+            ['https://kpi.example.com.evil.com/x.xml', 'forbidden'],
+            ['https://evil.com/?h=kpi.example.com', 'forbidden'],
+            ['https://evil.com/kpi.example.com', 'forbidden'],
+            ['file:///etc/passwd', 'invalid'],
+            ['ftp://kpi.example.com/x.xml', 'invalid'],
+            ['not a url', 'invalid'],
+            ['', 'invalid'],
+        ].forEach(([url, expected]) => {
+            it(`returns ${expected} for ${url || '(empty)'}`, () => {
+                expect(utils.isAllowedPreviewFormUrl(url, hosts)).to.equal(
+                    expected
+                );
+            });
+        });
+
+        it('rejects every URL when no hosts are configured', () => {
+            expect(
+                utils.isAllowedPreviewFormUrl('https://kpi.example.com/x', [])
+            ).to.equal('forbidden');
+        });
+    });
 });
