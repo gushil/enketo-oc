@@ -85,7 +85,7 @@ router
     .post('/xform/:encrypted_enketo_id_full_participant', getSurveyParts)
     .post('/xform/:encrypted_enketo_id_headless', getSurveyParts)
     .post('/xform/:enketo_id', getSurveyParts)
-    .post('/xform', getSurveyParts)
+    .post('/xform', getPreviewParts)
     .post('/xform/hash/:enketo_id', getSurveyHash)
     .post('/xform/hash/:encrypted_enketo_id_full_participant', getSurveyHash);
 
@@ -140,6 +140,50 @@ async function getSurveyParts(req, res, next) {
         } else {
             next(error);
         }
+    }
+}
+
+/**
+ * OC-28872: preview-by-URL. Fetches the XForm from an allowed host and
+ * transforms it on the server (libxslt), because browsers are removing XSLT.
+ *
+ * @param {module:api-controller~ExpressRequest} req - HTTP request
+ * @param {module:api-controller~ExpressResponse} res - HTTP response
+ * @param {Function} next - Express callback
+ */
+async function getPreviewParts(req, res, next) {
+    try {
+        let { xformUrl } = req.body;
+
+        // OC fork: preserveURLParser (config/express.js) keeps urlencoded
+        // values that start with "http" undecoded, so decode it once here.
+        if (xformUrl && req.is('urlencoded')) {
+            try {
+                xformUrl = decodeURIComponent(xformUrl);
+            } catch (error) {
+                throw new ResponseError(400);
+            }
+        }
+
+        const check = utils.isAllowedPreviewFormUrl(
+            xformUrl || '',
+            config['preview form hosts'] || []
+        );
+
+        if (check !== 'ok') {
+            throw new ResponseError(check === 'invalid' ? 400 : 403);
+        }
+
+        const xform = await communicator.getPreviewXForm(xformUrl);
+        const { form, model, languageMap } = await transformer.transform({
+            xform,
+            openclinica: true,
+        });
+
+        res.status(200);
+        res.send({ form, model, languageMap });
+    } catch (error) {
+        next(error);
     }
 }
 

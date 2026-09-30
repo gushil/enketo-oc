@@ -158,20 +158,17 @@ describe('Transformation Controller', () => {
             });
         });
 
-        // Direct requests are now performed client side. This failure is now
-        // the same as any other incomplete transformation API request.
-        it('responds with 400 for no longer supported direct requests for forms', async () => {
+        // OC-28872: direct requests are transformed on the server again, but
+        // only for hosts listed in "preview form hosts" (none by default).
+        it('responds with 403 for direct requests for forms on hosts that are not allowed', async () => {
             transformRequestURL = `/transform/xform`;
             transformRequestBody = {
                 xformUrl: 'http://example.com/qwerty.xml',
             };
 
-            const actual = await getTransformResult(400);
+            const actual = await getTransformResult(403);
 
-            expect(actual).to.deep.equal({
-                code: 400,
-                message: 'Bad Request. Survey information not complete.',
-            });
+            expect(actual).to.deep.equal({ code: 403 });
         });
     });
 
@@ -332,6 +329,79 @@ describe('Transformation Controller', () => {
 
                 expect(getMediaMapStub.getCalls().length).to.equal(1);
             });
+        });
+    });
+
+    describe('preview by URL (OC-28872)', () => {
+        const xformUrl = 'https://kpi.example.com/api/v2/asset_snapshots/a.xml';
+
+        beforeEach(() => {
+            sandbox
+                .stub(config, 'preview form hosts')
+                .get(() => ['kpi.example.com']);
+        });
+
+        it('transforms the form on the server', async () => {
+            const getPreviewXForm = sandbox
+                .stub(communicator, 'getPreviewXForm')
+                .resolves(
+                    '<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml"><h:head><h:title>t</h:title><model><instance><data id="t"><a/><meta><instanceID/></meta></data></instance></model></h:head><h:body><input ref="/data/a"><label>A</label></input></h:body></h:html>'
+                );
+
+            const res = await request(app)
+                .post(`${basePath}/transform/xform`)
+                .type('form')
+                .send({ xformUrl })
+                .expect(200);
+
+            expect(getPreviewXForm.calledOnceWith(xformUrl)).to.equal(true);
+            expect(res.body.form).to.contain('/data/a');
+            expect(res.body.model).to.contain('<instanceID');
+            expect(res.body).to.have.property('languageMap');
+        });
+
+        it('rejects hosts that are not allowed', async () => {
+            const getPreviewXForm = sandbox.stub(
+                communicator,
+                'getPreviewXForm'
+            );
+
+            await request(app)
+                .post(`${basePath}/transform/xform`)
+                .type('form')
+                .send({ xformUrl: 'https://evil.com/a.xml' })
+                .expect(403);
+
+            expect(getPreviewXForm.called).to.equal(false);
+        });
+
+        it('rejects invalid URLs', async () => {
+            await request(app)
+                .post(`${basePath}/transform/xform`)
+                .type('form')
+                .send({ xformUrl: 'file:///etc/passwd' })
+                .expect(400);
+        });
+
+        it('rejects requests without an xformUrl', async () => {
+            await request(app)
+                .post(`${basePath}/transform/xform`)
+                .type('form')
+                .send({})
+                .expect(400);
+        });
+
+        it('passes on the form host error status', async () => {
+            const error = new Error('Request failed.');
+
+            error.status = 404;
+            sandbox.stub(communicator, 'getPreviewXForm').rejects(error);
+
+            await request(app)
+                .post(`${basePath}/transform/xform`)
+                .type('form')
+                .send({ xformUrl })
+                .expect(404);
         });
     });
 });
