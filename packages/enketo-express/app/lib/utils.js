@@ -279,7 +279,12 @@ function isAllowedPreviewFormUrl(url, hosts) {
         return entry.startsWith('.') ? host.endsWith(entry) : host === entry;
     });
 
-    return allowed ? 'ok' : 'forbidden';
+    if (!allowed) {
+        return 'forbidden';
+    }
+
+    // A user name or password could be sent as an Authorization header
+    return parsed.username || parsed.password ? 'invalid' : 'ok';
 }
 
 module.exports = {

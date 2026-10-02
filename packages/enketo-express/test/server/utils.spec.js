@@ -253,6 +253,8 @@ describe('Utilities', () => {
             ['https://forms.example.org/x.xml', 'forbidden'],
             ['https://evilforms.example.org/x.xml', 'forbidden'],
             ['https://kpi.example.com@evil.com/x.xml', 'forbidden'],
+            ['https://user:secret@kpi.example.com/x.xml', 'invalid'],
+            ['https://user@kpi.example.com/x.xml', 'invalid'],
             ['https://kpi.example.com.evil.com/x.xml', 'forbidden'],
             ['https://evil.com/?h=kpi.example.com', 'forbidden'],
             ['https://evil.com/kpi.example.com', 'forbidden'],

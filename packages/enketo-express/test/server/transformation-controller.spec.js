@@ -364,6 +364,26 @@ describe('Transformation Controller', () => {
             expect(res.body).to.have.property('languageMap');
         });
 
+        it('decodes a form-encoded URL only once, whatever the scheme casing', async () => {
+            const getPreviewXForm = sandbox
+                .stub(communicator, 'getPreviewXForm')
+                .rejects(Object.assign(new Error('stop'), { status: 404 }));
+
+            await request(app)
+                .post(`${basePath}/transform/xform`)
+                .type('form')
+                .send(
+                    `xformUrl=${encodeURIComponent(
+                        'HTTPS://kpi.example.com/forms/a%20b.xml'
+                    )}`
+                )
+                .expect(404);
+
+            expect(getPreviewXForm.firstCall.args[0]).to.equal(
+                'HTTPS://kpi.example.com/forms/a%20b.xml'
+            );
+        });
+
         it('rejects hosts that are not allowed', async () => {
             const getPreviewXForm = sandbox.stub(
                 communicator,

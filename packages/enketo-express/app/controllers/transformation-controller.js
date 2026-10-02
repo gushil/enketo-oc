@@ -159,8 +159,13 @@ async function getPreviewParts(req, res, next) {
         let { xformUrl } = req.body;
 
         // OC fork: preserveURLParser (config/express.js) keeps urlencoded
-        // values that start with "http" undecoded, so decode it once here.
-        if (xformUrl && req.is('urlencoded')) {
+        // values that start with "http" undecoded, so decode only those once.
+        // Other values (e.g. "HTTPS://...") were already decoded by the parser.
+        if (
+            typeof xformUrl === 'string' &&
+            xformUrl.startsWith('http') &&
+            req.is('urlencoded')
+        ) {
             try {
                 xformUrl = decodeURIComponent(xformUrl);
             } catch (error) {

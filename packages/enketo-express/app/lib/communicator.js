@@ -13,6 +13,8 @@ const parser = new Xml2Js.Parser();
 const { getCurrentRequest } = require('./context');
 
 const TIMEOUT = config.timeout;
+// OC-28872: real XForms are far smaller; this stops a huge response early
+const PREVIEW_XFORM_MAX_SIZE = 10 * 1024 * 1024;
 
 /**
  * Gets form info
@@ -75,13 +77,65 @@ function getXForm(survey) {
 /**
  * OC-28872: obtains an XForm for preview-by-URL. No cookies or credentials are
  * sent, and redirects are not followed, so the fetch stays on the allowed host.
+ * The response is read as a stream and given up above `maxSize` bytes (413).
  *
  * @static
  * @param {string} url - form URL, already checked against "preview form hosts"
+ * @param {number} [maxSize] - largest response accepted, in bytes
  * @return { Promise<string> } a Promise that resolves with the XForm text
  */
-function getPreviewXForm(url) {
-    return _request({ url, followRedirect: false });
+function getPreviewXForm(url, maxSize = PREVIEW_XFORM_MAX_SIZE) {
+    return new Promise((resolve, reject) => {
+        const options = getUpdatedRequestOptions({
+            url,
+            followRedirect: false,
+        });
+        const chunks = [];
+        let size = 0;
+        let settled = false;
+        let req;
+
+        delete options.method;
+
+        const fail = (status, message) => {
+            if (!settled) {
+                settled = true;
+                req.abort();
+                const error = new Error(message);
+                error.status = status;
+                reject(error);
+            }
+        };
+
+        req = request
+            .get(options)
+            .on('response', (response) => {
+                if (response.statusCode < 200 || response.statusCode >= 300) {
+                    fail(response.statusCode, `Request to ${url} failed.`);
+                }
+            })
+            .on('data', (chunk) => {
+                size += chunk.length;
+
+                if (size > maxSize) {
+                    fail(413, `The form at ${url} is too large.`);
+                } else {
+                    chunks.push(chunk);
+                }
+            })
+            .on('end', () => {
+                if (!settled) {
+                    settled = true;
+                    resolve(Buffer.concat(chunks).toString('utf8'));
+                }
+            })
+            .on('error', (error) => {
+                if (!settled) {
+                    settled = true;
+                    reject(error);
+                }
+            });
+    });
 }
 
 /**
